@@ -1,4 +1,4 @@
-package com.campusshare.authservice.entity;
+package com.campusshare.verificationservice.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

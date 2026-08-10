@@ -1,4 +1,4 @@
-package com.campusshare.authservice.entity;
+package com.campusshare.verificationservice.entity;
 
 public enum Role {
     JUNIOR,
