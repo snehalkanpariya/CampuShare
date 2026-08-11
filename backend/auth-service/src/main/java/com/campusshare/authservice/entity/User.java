@@ -33,6 +33,7 @@ public class User {
     private boolean verified;
     private VerificationMethod verificationMethod;
     private VerificationStatus verificationStatus;
+    private LocalDateTime verifiedAt;
 
     private String otp;
     private LocalDateTime otpExpiry;

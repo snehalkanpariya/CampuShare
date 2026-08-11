@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/verify")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class VerificationController {
 

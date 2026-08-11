@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -59,6 +60,16 @@ public class AuthServiceImpl implements AuthService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+
+        // Call verification-service to dispatch OTP email
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String sendOtpUrl = "http://localhost:8082/api/verify/email/send-otp?email=" + generatedEmail + "&otp=" + generatedOtp;
+            restTemplate.postForObject(sendOtpUrl, null, String.class);
+            log.info("Triggered OTP email dispatch via verification-service for {}", generatedEmail);
+        } catch (Exception e) {
+            log.warn("Could not dispatch OTP email via verification-service: {}", e.getMessage());
+        }
 
         return RegisterResponse.builder()
                 .message("Junior registration successful. OTP sent to " + generatedEmail)
@@ -121,7 +132,9 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user.setVerified(true);
+        user.setVerificationMethod(VerificationMethod.EMAIL);
         user.setVerificationStatus(VerificationStatus.VERIFIED);
+        user.setVerifiedAt(LocalDateTime.now());
         user.setOtp(null);
         user.setOtpExpiry(null);
         user.setUpdatedAt(LocalDateTime.now());
@@ -142,6 +155,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
+        }
+
+        if (!user.isVerified()) {
+            throw new RuntimeException("Account is not verified yet. Please complete verification before logging in.");
         }
 
         String token = jwtService.generateToken(user.getEmail());
@@ -177,10 +194,11 @@ public class AuthServiceImpl implements AuthService {
     public void activateSenior(String enrollmentNumber) {
         User user = getUserByEnrollmentNumber(enrollmentNumber);
         user.setVerified(true);
-        user.setVerificationMethod(VerificationMethod.MARKSHEET);
+        user.setVerificationMethod(VerificationMethod.MARKSHEET_OCR);
         user.setVerificationStatus(VerificationStatus.VERIFIED);
+        user.setVerifiedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-        log.info("Activated Senior User in MongoDB: enrollmentNumber={}, email={}", enrollmentNumber, user.getEmail());
+        log.info("Activated Senior User in MongoDB: enrollmentNumber={}, email={}, method=MARKSHEET_OCR", enrollmentNumber, user.getEmail());
     }
 }

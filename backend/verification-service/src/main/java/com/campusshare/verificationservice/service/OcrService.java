@@ -59,7 +59,7 @@ public class OcrService {
                         .success(false)
                         .message("Provided name '" + trimmedName + "' does not match registered student name '" + dbUser.getName() + "'")
                         .enrollmentNumber(trimmedEnrollment)
-                        .verificationMethod("MARKSHEET")
+                        .verificationMethod("MARKSHEET_OCR")
                         .build();
             }
 
@@ -126,14 +126,14 @@ public class OcrService {
                         .success(true)
                         .message(messageDetails)
                         .enrollmentNumber(trimmedEnrollment)
-                        .verificationMethod("MARKSHEET")
+                        .verificationMethod("MARKSHEET_OCR")
                         .build();
             } else {
                 return VerificationResponse.builder()
                         .success(false)
                         .message(messageDetails)
                         .enrollmentNumber(trimmedEnrollment)
-                        .verificationMethod("MARKSHEET")
+                        .verificationMethod("MARKSHEET_OCR")
                         .build();
             }
         } catch (Exception e) {

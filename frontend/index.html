@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CampuShare | GVP - Gujarat Vidyapith</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              terracotta: {
+                DEFAULT: '#A84B2A',
+                hover: '#8B3A1E',
+                dark: '#742A12',
+                light: '#FBF4F0'
+              },
+              beige: {
+                DEFAULT: '#F9F6F0',
+                card: '#FFFFFF'
+              },
+              sage: {
+                DEFAULT: '#5B7E53',
+                light: '#EBF2E8'
+              },
+              gold: {
+                DEFAULT: '#D4A359',
+                light: '#FDF8EF'
+              }
+            },
+            fontFamily: {
+              serif: ['"Noto Serif"', 'Georgia', 'serif'],
+              sans: ['"Plus Jakarta Sans"', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-beige text-[#2C221E] font-sans antialiased min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
