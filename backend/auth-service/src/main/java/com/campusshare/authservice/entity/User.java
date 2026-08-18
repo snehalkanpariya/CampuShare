@@ -27,6 +27,8 @@ public class User {
 
     private String department;
     private String year;
+    private String semester;
+    private String profilePicture;
     private String password;
 
     private Role role;

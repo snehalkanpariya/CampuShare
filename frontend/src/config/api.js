@@ -1,4 +1,5 @@
 const AUTH_URLS = ['http://localhost:8081/api/auth', 'http://localhost:8080/api/auth'];
+const USER_URLS = ['http://localhost:8081/api/users', 'http://localhost:8080/api/users'];
 const VERIFY_URLS = ['http://localhost:8082/api/verify', 'http://localhost:8080/api/verify'];
 
 async function fetchWithFallback(urlList, path, options) {
@@ -63,3 +64,14 @@ export async function loginApi(data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function getUserProfileApi(token) {
+  return fetchWithFallback(USER_URLS, '/me', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+}
+
