@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { MapPin, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, ShieldCheck, Plus, Search, Tag, Eye } from 'lucide-react';
+import { getItems, addItem, updateItem, deleteItem } from '../utils/itemStorage';
+import AddItemModal from '../components/AddItemModal';
+import ViewItemModal from '../components/ViewItemModal';
 
 export default function Dashboard({ currentUser, onNavigate }) {
+  const [items, setItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
 
   const categories = [
-    { id: 'All', label: 'All' },
+    { id: 'All', label: 'All Items' },
     { id: 'Books', label: 'Books 📚' },
     { id: 'Electronics', label: 'Electronics 💻' },
     { id: 'Stationery', label: 'Stationery 📝' },
@@ -13,66 +21,76 @@ export default function Dashboard({ currentUser, onNavigate }) {
     { id: 'Hostel Needs', label: 'Hostel Needs 🎁' },
   ];
 
-  const items = [
-    {
-      id: 1,
-      title: 'Physics Textbook',
-      category: 'Books',
-      badge: 'Verified Senior',
-      badgeBg: 'bg-blue-100 text-blue-700',
-      price: '₹250',
-      originalPrice: '₹650',
-      location: 'Central Library',
-      image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: 2,
-      title: 'Scientific Calculator',
-      category: 'Electronics',
-      badge: 'Verified Senior',
-      badgeBg: 'bg-blue-100 text-blue-700',
-      price: '₹250',
-      originalPrice: '₹650',
-      location: 'Central Library',
-      image: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: 3,
-      title: 'Ganesh Idol',
-      category: 'Hostel Needs',
-      badge: 'Free Gift',
-      badgeBg: 'bg-emerald-100 text-emerald-800',
-      price: '₹250',
-      originalPrice: '₹650',
-      location: 'Central Library',
-      image: 'https://images.unsplash.com/photo-1627894006066-b457a4da3756?auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: 4,
-      title: 'HP Laptop Charger',
-      category: 'Electronics',
-      badge: 'Verified Senior',
-      badgeBg: 'bg-blue-100 text-blue-700',
-      price: '₹250',
-      originalPrice: '₹650',
-      location: 'Central Library',
-      image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=400&q=80'
-    }
-  ];
+  const loadAllItems = () => {
+    const loaded = getItems();
+    setItems(loaded);
+  };
 
-  const filteredItems = selectedCategory === 'All' 
-    ? items 
-    : items.filter(item => item.category === selectedCategory);
+  useEffect(() => {
+    loadAllItems();
+  }, []);
+
+  const handleSaveItem = (newItemData) => {
+    if (editingItem) {
+      updateItem(newItemData);
+    } else {
+      addItem(newItemData, currentUser);
+    }
+    loadAllItems();
+    setEditingItem(null);
+  };
+
+  const handleDeleteItem = (itemId) => {
+    deleteItem(itemId);
+    loadAllItems();
+    if (viewingItem && viewingItem.id === itemId) {
+      setViewingItem(null);
+    }
+  };
+
+  const filteredItems = items.filter(item => {
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesSearch = (item.name || item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.location || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      
+      {/* Top Header & Search Bar Row */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+          <input
+            type="text"
+            placeholder="Search items by name, category, or hostel location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-stone-200 bg-white text-sm font-medium focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 shadow-sm transition-all"
+          />
+        </div>
+
+        <button
+          onClick={() => {
+            setEditingItem(null);
+            setIsAddModalOpen(true);
+          }}
+          className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all shrink-0"
+        >
+          <Plus size={18} />
+          <span>+ Share / Add Item</span>
+        </button>
+      </div>
+
       {/* Category Pills */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-5 py-2 rounded-full font-bold text-xs whitespace-nowrap transition-all shadow-sm ${
+            className={`px-5 py-2.5 rounded-full font-bold text-xs whitespace-nowrap transition-all shadow-sm ${
               selectedCategory === cat.id
                 ? 'bg-terracotta text-white shadow-terracotta/25'
                 : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
@@ -86,63 +104,165 @@ export default function Dashboard({ currentUser, onNavigate }) {
       {/* Hero Eco Banner & Widget Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Eco Counter Banner */}
-        <div className="md:col-span-2 bg-emerald-50 rounded-3xl p-6 border border-emerald-200 flex flex-col justify-between">
-          <div>
-            <h2 className="text-2xl font-extrabold font-serif text-emerald-900 mb-2">
-              "Anand Niketan" Eco-Counter
+        <div className="md:col-span-2 bg-gradient-to-r from-emerald-800 to-teal-900 text-white rounded-3xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
+          <div className="relative z-10">
+            <span className="bg-emerald-700/80 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider text-emerald-200">
+              Campus Sustainability
+            </span>
+            <h2 className="text-2xl font-extrabold font-serif mt-2 mb-1">
+              "Anand Niketan" Re-homing Hub
             </h2>
+            <p className="text-xs text-emerald-100 font-medium max-w-md">
+              Share textbooks, lab equipment, and hostel gear with junior students to build a sustainable campus ecosystem.
+            </p>
           </div>
-          <div className="bg-emerald-700 text-white px-4 py-2 rounded-full font-extrabold text-xs w-fit shadow-md">
-            1,240 Items Re-homed 🌿 Saved ₹2.5 Lakhs
+          <div className="mt-4 relative z-10 flex flex-wrap gap-2 items-center">
+            <div className="bg-emerald-600/90 text-white px-4 py-2 rounded-full font-extrabold text-xs shadow-md">
+              1,240+ Items Shared 🌿
+            </div>
+            <div className="bg-emerald-950/60 backdrop-blur-md text-emerald-200 px-4 py-2 rounded-full font-bold text-xs">
+              ₹2.5 Lakhs Student Savings
+            </div>
           </div>
         </div>
 
         {/* Most Wanted */}
-        <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-sm space-y-2">
-          <h4 className="text-xs font-extrabold uppercase tracking-wider text-stone-400">Hostel Pickups</h4>
-          <div className="text-xl font-extrabold text-terracotta">₹250 / ₹650</div>
+        <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-stone-400 mb-1">Hostel Pickups & Exchanges</h4>
+            <div className="text-2xl font-extrabold text-terracotta">Zero-Fee Peer Sharing</div>
+            <p className="text-xs text-stone-500 font-medium mt-1">
+              Verified campus handovers at library gates & hostel common rooms.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('listings')}
+            className="mt-3 w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition-all border border-stone-200"
+          >
+            View My Shared Items
+          </button>
         </div>
       </div>
 
-      {/* Items Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-3xl overflow-hidden border border-stone-200 shadow-md hover:shadow-xl transition-all flex flex-col group"
-          >
-            <div className="relative h-44 bg-stone-100 overflow-hidden">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-extrabold shadow-sm ${item.badgeBg}`}>
-                {item.badge}
-              </span>
-            </div>
-
-            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-              <div>
-                <h3 className="text-base font-extrabold text-stone-800 line-clamp-1">{item.title}</h3>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-lg font-extrabold text-terracotta">{item.price}</span>
-                  <span className="text-xs text-stone-400 line-through font-semibold">{item.originalPrice}</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-semibold text-stone-500 flex items-center gap-1 mb-3">
-                  <MapPin size={14} className="text-stone-400" /> {item.location}
-                </div>
-                <button className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-2 rounded-xl font-bold text-xs shadow-md transition-all">
-                  Safe Exchange
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Items Grid Header */}
+      <div className="flex items-center justify-between pt-2">
+        <h3 className="text-lg font-extrabold text-stone-800 font-serif">
+          {selectedCategory === 'All' ? 'All Shared Items' : `${selectedCategory} Listings`}
+          <span className="ml-2 text-xs font-semibold text-stone-400">({filteredItems.length} available)</span>
+        </h3>
       </div>
+
+      {/* Items Grid */}
+      {filteredItems.length === 0 ? (
+        <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 shadow-sm space-y-3">
+          <div className="text-4xl">🔍</div>
+          <h4 className="text-base font-bold text-stone-700">No items found</h4>
+          <p className="text-xs text-stone-400 max-w-sm mx-auto">
+            Try adjusting your search query or category filter to discover shared items.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {filteredItems.map((item) => {
+            const isOwner = currentUser && (
+              item.ownerId === currentUser.email || 
+              item.ownerId === currentUser.id ||
+              item.ownerId === 'guest-user' ||
+              item.ownerName === currentUser.name ||
+              item.ownerName === currentUser.full_name
+            );
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => setViewingItem(item)}
+                className="bg-white rounded-3xl overflow-hidden border border-stone-200 shadow-md hover:shadow-xl transition-all flex flex-col group cursor-pointer relative"
+              >
+                {/* Image & Badges */}
+                <div className="relative h-44 bg-stone-100 overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.name || item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-extrabold shadow-sm ${
+                    item.verified !== false ? 'bg-blue-100 text-blue-700' : 'bg-stone-100 text-stone-700'
+                  }`}>
+                    {item.ownerRole || 'Verified Member'}
+                  </span>
+
+                  <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold shadow-sm ${
+                    item.availability === 'Available' ? 'bg-emerald-500 text-white' :
+                    item.availability === 'Reserved' ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'
+                  }`}>
+                    {item.availability || 'Available'}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <div>
+                    <h3 className="text-base font-extrabold text-stone-800 line-clamp-1">{item.name || item.title}</h3>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-lg font-extrabold text-terracotta">{item.price}</span>
+                      {item.originalPrice && item.price !== 'Free' && (
+                        <span className="text-xs text-stone-400 line-through font-semibold">{item.originalPrice}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-medium text-stone-500">
+                      <span className="flex items-center gap-1">
+                        <MapPin size={14} className="text-stone-400" /> {item.location || 'Campus'}
+                      </span>
+                      <span className="text-[11px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-md">
+                        {item.condition || 'Good'}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewingItem(item);
+                      }}
+                      className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-2 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Eye size={14} />
+                      <span>{isOwner ? 'View / Edit My Item' : 'View Item Details'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add / Edit Item Modal */}
+      <AddItemModal
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingItem(null);
+        }}
+        onSave={handleSaveItem}
+        editItem={editingItem}
+      />
+
+      {/* View Item Modal */}
+      <ViewItemModal
+        item={viewingItem}
+        isOpen={!!viewingItem}
+        onClose={() => setViewingItem(null)}
+        currentUser={currentUser}
+        onEdit={(item) => {
+          setEditingItem(item);
+          setIsAddModalOpen(true);
+        }}
+        onDelete={handleDeleteItem}
+      />
+
     </div>
   );
 }

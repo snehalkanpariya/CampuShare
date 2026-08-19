@@ -11,6 +11,7 @@ import VerificationResult from './pages/VerificationResult';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import MyListings from './pages/MyListings';
 import Profile from './pages/Profile';
 
 export default function App() {
@@ -64,10 +65,11 @@ export default function App() {
       case 'forgot-password':
         return <ForgotPassword onNavigate={setCurrentView} />;
       case 'dashboard':
-      case 'listings':
       case 'hostel':
       case 'exchange-map':
         return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+      case 'listings':
+        return <MyListings currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'profile':
         return <Profile currentUser={currentUser} />;
       default:
