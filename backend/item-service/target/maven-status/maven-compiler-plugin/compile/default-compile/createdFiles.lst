@@ -1,0 +1,11 @@
+com\campusshare\itemservice\dto\ItemResponseDTO$ItemResponseDTOBuilder.class
+com\campusshare\itemservice\service\impl\ItemServiceImpl.class
+com\campusshare\itemservice\dto\ItemResponseDTO.class
+com\campusshare\itemservice\repository\ItemRepository.class
+com\campusshare\itemservice\entity\Item$ItemBuilder.class
+com\campusshare\itemservice\entity\Item.class
+com\campusshare\itemservice\controller\ItemController.class
+com\campusshare\itemservice\dto\ItemRequestDTO.class
+com\campusshare\itemservice\dto\ItemRequestDTO$ItemRequestDTOBuilder.class
+com\campusshare\itemservice\ItemServiceApplication.class
+com\campusshare\itemservice\service\ItemService.class

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ShieldCheck, Plus, Search, Tag, Eye } from 'lucide-react';
+import { MapPin, ShieldCheck, Plus, Search, Tag, Eye, Gift } from 'lucide-react';
 import { getItems, addItem, updateItem, deleteItem } from '../utils/itemStorage';
 import AddItemModal from '../components/AddItemModal';
 import ViewItemModal from '../components/ViewItemModal';
@@ -9,16 +9,21 @@ export default function Dashboard({ currentUser, onNavigate }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [defaultIsFree, setDefaultIsFree] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
   const categories = [
     { id: 'All', label: 'All Items' },
     { id: 'Books', label: 'Books 📚' },
+    { id: 'Notes', label: 'Notes 📝' },
+    { id: 'Last Year Papers', label: 'Last Year Papers 📑' },
+    { id: 'Charkha & Crafts', label: 'Charkha & Crafts 🧶' },
+    { id: 'Projects', label: 'Projects 🤖' },
     { id: 'Electronics', label: 'Electronics 💻' },
-    { id: 'Stationery', label: 'Stationery 📝' },
-    { id: 'Bicycles', label: 'Bicycles 🚲' },
     { id: 'Hostel Needs', label: 'Hostel Needs 🎁' },
+    { id: 'Bicycles', label: 'Bicycles 🚲' },
+    { id: 'Stationery', label: 'Stationery 📐' },
   ];
 
   const loadAllItems = () => {
@@ -59,29 +64,47 @@ export default function Dashboard({ currentUser, onNavigate }) {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       
-      {/* Top Header & Search Bar Row */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      {/* Top Header & Separate Action Buttons Row */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
-            placeholder="Search items by name, category, or hostel location..."
+            placeholder="Search items by name (Charkha, Papers, Notes, Books...), category, or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-2xl border border-stone-200 bg-white text-sm font-medium focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 shadow-sm transition-all"
           />
         </div>
 
-        <button
-          onClick={() => {
-            setEditingItem(null);
-            setIsAddModalOpen(true);
-          }}
-          className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all shrink-0"
-        >
-          <Plus size={18} />
-          <span>+ Share / Add Item</span>
-        </button>
+        {/* Separated Action Buttons */}
+        <div className="flex gap-2 shrink-0">
+          {/* Add Item Button */}
+          <button
+            onClick={() => {
+              setEditingItem(null);
+              setDefaultIsFree(false);
+              setIsAddModalOpen(true);
+            }}
+            className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all flex-1 md:flex-none"
+          >
+            <Plus size={18} />
+            <span>+ Add Item</span>
+          </button>
+
+          {/* Share / Free Gift Button */}
+          <button
+            onClick={() => {
+              setEditingItem(null);
+              setDefaultIsFree(true);
+              setIsAddModalOpen(true);
+            }}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all flex-1 md:flex-none"
+          >
+            <Gift size={18} />
+            <span>🎁 Share Free Gift</span>
+          </button>
+        </div>
       </div>
 
       {/* Category Pills */}
@@ -113,7 +136,7 @@ export default function Dashboard({ currentUser, onNavigate }) {
               "Anand Niketan" Re-homing Hub
             </h2>
             <p className="text-xs text-emerald-100 font-medium max-w-md">
-              Share textbooks, lab equipment, and hostel gear with junior students to build a sustainable campus ecosystem.
+              Share Charkha crafts, last year papers, GATE notes, textbooks, robotics projects, and hostel gear with fellow students.
             </p>
           </div>
           <div className="mt-4 relative z-10 flex flex-wrap gap-2 items-center">
@@ -245,9 +268,11 @@ export default function Dashboard({ currentUser, onNavigate }) {
         onClose={() => {
           setIsAddModalOpen(false);
           setEditingItem(null);
+          setDefaultIsFree(false);
         }}
         onSave={handleSaveItem}
         editItem={editingItem}
+        defaultIsFree={defaultIsFree}
       />
 
       {/* View Item Modal */}

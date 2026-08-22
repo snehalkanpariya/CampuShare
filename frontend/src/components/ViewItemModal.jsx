@@ -45,31 +45,31 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-stone-950/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-8 animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200 relative my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Top Image Preview */}
-        <div className="relative h-64 bg-stone-900 overflow-hidden">
+        <div className="relative h-60 sm:h-64 bg-stone-900 overflow-hidden shrink-0">
           <img
             src={item.image}
             alt={item.name || item.title}
             className="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-black/30" />
           
-          {/* Prominent Close Button at Top Right */}
+          {/* Top-Right Clean Icon-Only X Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 px-3 py-1.5 bg-stone-900/80 hover:bg-stone-950 text-white font-extrabold text-xs rounded-full transition-all backdrop-blur-md flex items-center gap-1.5 shadow-lg border border-white/20"
-            title="Close Window"
+            className="absolute top-4 right-4 p-2.5 bg-stone-900/80 hover:bg-stone-950 text-white rounded-full transition-all backdrop-blur-md flex items-center justify-center shadow-lg border border-white/20 hover:scale-110 focus:outline-none"
+            title="Close"
+            aria-label="Close"
           >
-            <X size={16} />
-            <span>Close</span>
+            <X size={20} />
           </button>
 
           {/* Badges on Image */}
@@ -83,9 +83,9 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 text-white">
-            <h2 className="text-2xl font-extrabold line-clamp-1 drop-shadow-md">{item.name || item.title}</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold line-clamp-1 drop-shadow-md">{item.name || item.title}</h2>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-extrabold text-amber-300 drop-shadow-sm">{item.price}</span>
+              <span className="text-xl sm:text-2xl font-extrabold text-amber-300 drop-shadow-sm">{item.price}</span>
               {item.originalPrice && item.price !== 'Free' && (
                 <span className="text-xs text-stone-300 line-through font-semibold">{item.originalPrice}</span>
               )}
@@ -93,8 +93,8 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
           </div>
         </div>
 
-        {/* Content Details */}
-        <div className="p-6 space-y-5">
+        {/* Scrollable Content Body */}
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
           
           {/* Key Attributes Row */}
           <div className="flex flex-wrap items-center gap-3">
@@ -148,8 +148,8 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
             </div>
           </div>
 
-          {/* Action Buttons & Footer Close Option */}
-          <div className="pt-3 border-t border-stone-100 space-y-3">
+          {/* Action Buttons */}
+          <div className="pt-2">
             {isOwner ? (
               <div className="space-y-2">
                 {showConfirmDelete && (
@@ -204,15 +204,6 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
                 <span>Contact Sharer & Request Item</span>
               </button>
             )}
-
-            {/* Explicit Close Button */}
-            <button
-              onClick={onClose}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-stone-600 bg-stone-100 hover:bg-stone-200 flex items-center justify-center gap-2 transition-all border border-stone-200"
-            >
-              <X size={16} />
-              <span>Close Window</span>
-            </button>
           </div>
 
         </div>

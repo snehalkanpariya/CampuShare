@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Sparkles, AlertCircle } from 'lucide-react';
-import { getDefaultImageForCategory } from '../utils/itemStorage';
+import { X, Sparkles, AlertCircle, Image as ImageIcon, Check } from 'lucide-react';
+import { PRESET_IMAGES, resolveImageForItem } from '../utils/itemStorage';
 
 export default function AddItemModal({ isOpen, onClose, onSave, editItem = null }) {
   const [formData, setFormData] = useState({
@@ -17,6 +17,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
   });
 
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('auto'); // 'auto' | 'presets' | 'custom'
 
   useEffect(() => {
     if (editItem) {
@@ -47,13 +48,28 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
       });
     }
     setError('');
+    setActiveTab('auto');
   }, [editItem, isOpen]);
 
   if (!isOpen) return null;
 
-  const categories = ['Books', 'Electronics', 'Stationery', 'Bicycles', 'Hostel Needs', 'Other'];
+  const categories = [
+    'Books',
+    'Notes',
+    'Last Year Papers',
+    'Charkha & Crafts',
+    'Projects',
+    'Electronics',
+    'Hostel Needs',
+    'Bicycles',
+    'Stationery',
+    'Other'
+  ];
   const conditions = ['New', 'Like New', 'Good', 'Fair'];
   const availabilities = ['Available', 'Reserved', 'Claimed / Unavailable'];
+
+  // Smart resolved image preview
+  const previewImage = resolveImageForItem(formData.name, formData.category, formData.image);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -72,7 +88,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
 
     const payload = {
       ...formData,
-      image: formData.image.trim() || getDefaultImageForCategory(formData.category)
+      image: previewImage
     };
 
     if (editItem) {
@@ -85,16 +101,16 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-stone-950/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 relative my-8 animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header with Close Button */}
-        <div className="flex items-center justify-between border-b border-stone-100 pb-4 mb-4">
+        {/* Header with Icon-Only X Cancel Button (No Word Text) */}
+        <div className="flex items-center justify-between border-b border-stone-100 pb-4 mb-4 shrink-0">
           <div>
             <h2 className="text-xl font-extrabold text-stone-800 flex items-center gap-2">
               <Sparkles className="text-terracotta" size={20} />
@@ -104,26 +120,26 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
               {editItem ? 'Update your item attributes and availability' : 'Help fellow campus members by sharing or listing items'}
             </p>
           </div>
-          
+
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-full transition-all flex items-center gap-1 border border-stone-200"
-            title="Close Window"
+            className="p-2.5 text-stone-400 hover:text-stone-700 rounded-full hover:bg-stone-100 transition-all focus:outline-none"
+            title="Close"
+            aria-label="Close"
           >
-            <X size={16} />
-            <span>Close</span>
+            <X size={20} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700 flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700 flex items-center gap-2 shrink-0">
             <AlertCircle size={16} className="shrink-0 text-red-500" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1">
           
           {/* Item Name */}
           <div>
@@ -132,25 +148,10 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
             </label>
             <input
               type="text"
-              placeholder="e.g. Engineering Physics Textbook 1st Year"
+              placeholder="e.g. Traditional Charkha Craft, Last Year Exam Papers, GATE CS Notes, Arduino Project..."
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-semibold focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-xs font-extrabold text-stone-700 uppercase tracking-wider mb-1">
-              Description *
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Provide details about condition, edition, accessories included, or campus pickup points..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all resize-none"
               required
             />
           </div>
@@ -186,6 +187,21 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-extrabold text-stone-700 uppercase tracking-wider mb-1">
+              Description *
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Provide details about condition, semester, edition, accessories included, or pickup points..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all resize-none"
+              required
+            />
           </div>
 
           {/* Availability & Location */}
@@ -230,7 +246,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
                   onChange={(e) => setFormData({ ...formData, isFree: e.target.checked })}
                   className="rounded text-terracotta focus:ring-terracotta w-4 h-4"
                 />
-                <span className="text-xs font-extrabold text-emerald-700">Give Away For FREE 🎁</span>
+                <span className="text-xs font-extrabold text-emerald-700">Give Away For FREE / Gift 🎁</span>
               </label>
             </div>
 
@@ -260,32 +276,114 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
             )}
           </div>
 
-          {/* Image URL */}
-          <div>
-            <label className="block text-xs font-extrabold text-stone-700 uppercase tracking-wider mb-1">
-              Image URL (Optional)
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                placeholder="https://..."
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-mono focus:outline-none focus:border-terracotta"
-              />
+          {/* Interactive Item Photo Selection */}
+          <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
+                <ImageIcon size={16} className="text-terracotta" />
+                Item Cover Photo
+              </label>
+              
+              <div className="flex bg-white rounded-lg p-0.5 border border-stone-200 text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('auto')}
+                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'auto' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                >
+                  Auto Match
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('presets')}
+                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'presets' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                >
+                  Presets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('custom')}
+                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'custom' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                >
+                  URL
+                </button>
+              </div>
             </div>
-            <p className="text-[11px] text-stone-400 mt-1">Leave empty to use category default illustration.</p>
+
+            {/* Live Image Preview & Selector */}
+            <div className="flex items-center gap-4">
+              <div className="relative w-24 h-20 bg-stone-200 rounded-xl overflow-hidden shrink-0 border border-stone-300 shadow-sm">
+                <img
+                  src={previewImage}
+                  alt="Item Preview"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1 right-1 bg-stone-900/80 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+                  Cover
+                </span>
+              </div>
+
+              <div className="flex-1 text-xs text-stone-600 font-medium">
+                {activeTab === 'auto' && (
+                  <p className="text-[11px] text-stone-600 leading-snug">
+                    ✨ <strong>Smart Auto-Match Active</strong>: Auto-detects cover photos for Charkha crafts, last year papers, notes, laptops, & projects based on your item name.
+                  </p>
+                )}
+
+                {activeTab === 'custom' && (
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-mono focus:outline-none focus:border-terracotta bg-white"
+                  />
+                )}
+
+                {activeTab === 'presets' && (
+                  <p className="text-[11px] text-stone-500">Choose a preset photo from the gallery below:</p>
+                )}
+              </div>
+            </div>
+
+            {/* Preset Thumbnails Grid */}
+            {activeTab === 'presets' && (
+              <div className="grid grid-cols-4 gap-2 pt-2 max-h-36 overflow-y-auto pr-1">
+                {PRESET_IMAGES.map((preset) => {
+                  const isSelected = formData.image === preset.url;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image: preset.url })}
+                      className={`relative h-14 rounded-lg overflow-hidden border-2 transition-all group text-left ${
+                        isSelected ? 'border-terracotta ring-2 ring-terracotta/30' : 'border-stone-200 hover:border-amber-400'
+                      }`}
+                    >
+                      <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-stone-950/40 group-hover:bg-stone-950/20 transition-all" />
+                      <span className="absolute bottom-0.5 left-1 text-[9px] font-extrabold text-white line-clamp-1 drop-shadow-sm">
+                        {preset.title}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute top-1 right-1 bg-terracotta text-white p-0.5 rounded-full">
+                          <Check size={10} />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Buttons with explicit Close option */}
+          {/* Action Buttons */}
           <div className="flex gap-3 pt-3 border-t border-stone-100">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl font-bold text-xs text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all border border-stone-200 flex items-center justify-center gap-1.5"
+              className="flex-1 py-2.5 rounded-xl font-bold text-xs text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all border border-stone-200"
             >
-              <X size={15} />
-              <span>Close / Cancel</span>
+              Cancel
             </button>
             <button
               type="submit"

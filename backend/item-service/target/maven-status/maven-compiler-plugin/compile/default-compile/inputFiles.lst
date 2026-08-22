@@ -1,0 +1,8 @@
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\controller\ItemController.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\dto\ItemRequestDTO.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\dto\ItemResponseDTO.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\entity\Item.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\ItemServiceApplication.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\repository\ItemRepository.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\service\impl\ItemServiceImpl.java
+D:\CampuShare\backend\item-service\src\main\java\com\campusshare\itemservice\service\ItemService.java
