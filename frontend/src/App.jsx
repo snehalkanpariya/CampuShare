@@ -13,6 +13,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import MyListings from './pages/MyListings';
 import Profile from './pages/Profile';
+import SafeExchange from './pages/SafeExchange';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('welcome');
@@ -65,11 +66,12 @@ export default function App() {
       case 'forgot-password':
         return <ForgotPassword onNavigate={setCurrentView} />;
       case 'dashboard':
-      case 'hostel':
-      case 'exchange-map':
         return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'listings':
         return <MyListings currentUser={currentUser} onNavigate={setCurrentView} />;
+      case 'hostel':
+      case 'exchange-map':
+        return <SafeExchange currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'profile':
         return <Profile currentUser={currentUser} />;
       default:

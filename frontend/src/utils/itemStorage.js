@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'campus_share_items_v4';
+const STORAGE_KEY = 'campus_share_items_v6';
 
 export const PRESET_IMAGES = [
   {
@@ -243,46 +243,9 @@ const DEFAULT_ITEMS = [
 ];
 
 export function resolveImageForItem(name = '', category = '', customUrl = '') {
-  if (customUrl && customUrl.trim().startsWith('http')) {
+  if (customUrl && customUrl.trim().length > 0) {
     return customUrl.trim();
   }
-
-  const query = (name + ' ' + category).toLowerCase();
-
-  if (query.includes('charkha') || query.includes('sharkho') || query.includes('craft') || query.includes('handloom') || query.includes('khadi') || query.includes('yarn')) {
-    return 'https://images.unsplash.com/photo-1606744888344-493238951221?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('paper') || query.includes('pepar') || query.includes('exam paper') || query.includes('question paper') || query.includes('pyq')) {
-    return 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('note') || query.includes('notes') || query.includes('gate') || query.includes('assignment') || query.includes('handwritten')) {
-    return 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('macbook') || query.includes('mac book') || query.includes('laptop') || query.includes('notebook') || query.includes('dell') || query.includes('hp')) {
-    return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('project') || query.includes('arduino') || query.includes('robot') || query.includes('circuit') || query.includes('sensor') || query.includes('iot')) {
-    return 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('kettle') || query.includes('heater') || query.includes('boiler')) {
-    return 'https://images.unsplash.com/photo-1585670149967-b4f4da88cc9f?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('lamp') || query.includes('light') || query.includes('led')) {
-    return 'https://images.unsplash.com/photo-1534353436294-0dbd4bdac845?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('calculator') || query.includes('casio')) {
-    return 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('cycle') || query.includes('bicycle') || query.includes('bike')) {
-    return 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('drafter') || query.includes('stationery') || query.includes('drawing')) {
-    return 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=600&q=80';
-  }
-  if (query.includes('book') || query.includes('textbook') || query.includes('math') || query.includes('physics')) {
-    return 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
-  }
-
   return getDefaultImageForCategory(category);
 }
 

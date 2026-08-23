@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, AlertCircle, Image as ImageIcon, Check } from 'lucide-react';
+import { X, Sparkles, AlertCircle, Image as ImageIcon, Check, Upload, Link as LinkIcon } from 'lucide-react';
 import { PRESET_IMAGES, resolveImageForItem } from '../utils/itemStorage';
 
 export default function AddItemModal({ isOpen, onClose, onSave, editItem = null }) {
@@ -17,7 +17,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
   });
 
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('auto'); // 'auto' | 'presets' | 'custom'
+  const [activePhotoTab, setActivePhotoTab] = useState('upload'); // 'upload' | 'gallery' | 'url'
 
   useEffect(() => {
     if (editItem) {
@@ -48,7 +48,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
       });
     }
     setError('');
-    setActiveTab('auto');
+    setActivePhotoTab('upload');
   }, [editItem, isOpen]);
 
   if (!isOpen) return null;
@@ -68,8 +68,25 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
   const conditions = ['New', 'Like New', 'Good', 'Fair'];
   const availabilities = ['Available', 'Reserved', 'Claimed / Unavailable'];
 
-  // Smart resolved image preview
-  const previewImage = resolveImageForItem(formData.name, formData.category, formData.image);
+  // Handle local file upload (device image selection)
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image file size should be less than 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, image: reader.result }));
+        setError('');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Current image preview (user uploaded file/URL, chosen preset, or fallback)
+  const currentPreview = formData.image.trim() || resolveImageForItem('', formData.category, '');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -88,7 +105,7 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
 
     const payload = {
       ...formData,
-      image: previewImage
+      image: currentPreview
     };
 
     if (editItem) {
@@ -276,78 +293,101 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
             )}
           </div>
 
-          {/* Interactive Item Photo Selection */}
-          <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200/80 space-y-3">
+          {/* Manual Product Image Selection & File Upload */}
+          <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-extrabold text-stone-800 flex items-center gap-1.5">
-                <ImageIcon size={16} className="text-terracotta" />
-                Item Cover Photo
+              <label className="text-xs font-extrabold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon size={15} className="text-terracotta" />
+                Product Image (Upload / Choose Photo)
               </label>
-              
+
+              {/* Mode Tabs */}
               <div className="flex bg-white rounded-lg p-0.5 border border-stone-200 text-[11px] font-bold">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('auto')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'auto' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                  onClick={() => setActivePhotoTab('upload')}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                    activePhotoTab === 'upload' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'
+                  }`}
                 >
-                  Auto Match
+                  <Upload size={12} />
+                  <span>Upload File</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('presets')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'presets' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                  onClick={() => setActivePhotoTab('gallery')}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                    activePhotoTab === 'gallery' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'
+                  }`}
                 >
-                  Presets
+                  <ImageIcon size={12} />
+                  <span>Photo Gallery</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('custom')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'custom' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'}`}
+                  onClick={() => setActivePhotoTab('url')}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                    activePhotoTab === 'url' ? 'bg-terracotta text-white' : 'text-stone-600 hover:text-stone-900'
+                  }`}
                 >
-                  URL
+                  <LinkIcon size={12} />
+                  <span>Web Link</span>
                 </button>
               </div>
             </div>
 
-            {/* Live Image Preview & Selector */}
+            {/* Main Upload / Selector Controls */}
             <div className="flex items-center gap-4">
               <div className="relative w-24 h-20 bg-stone-200 rounded-xl overflow-hidden shrink-0 border border-stone-300 shadow-sm">
                 <img
-                  src={previewImage}
-                  alt="Item Preview"
+                  src={currentPreview}
+                  alt="Product Preview"
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute bottom-1 right-1 bg-stone-900/80 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">
-                  Cover
+                  Preview
                 </span>
               </div>
 
-              <div className="flex-1 text-xs text-stone-600 font-medium">
-                {activeTab === 'auto' && (
-                  <p className="text-[11px] text-stone-600 leading-snug">
-                    ✨ <strong>Smart Auto-Match Active</strong>: Auto-detects cover photos for Charkha crafts, last year papers, notes, laptops, & projects based on your item name.
-                  </p>
+              <div className="flex-1 text-xs">
+                {activePhotoTab === 'upload' && (
+                  <div className="space-y-1.5">
+                    <label className="block cursor-pointer bg-white hover:bg-stone-100 text-stone-800 border border-dashed border-stone-300 rounded-xl p-3 text-center transition-all">
+                      <Upload size={16} className="mx-auto text-terracotta mb-1" />
+                      <span className="font-bold text-xs">Choose Image File from Computer</span>
+                      <span className="block text-[10px] text-stone-400">JPG, PNG, WebP up to 5MB</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 )}
 
-                {activeTab === 'custom' && (
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs font-mono focus:outline-none focus:border-terracotta bg-white"
-                  />
+                {activePhotoTab === 'url' && (
+                  <div className="space-y-1">
+                    <span className="block font-semibold text-stone-700 text-[11px]">Paste Image URL from any website:</span>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.image}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-stone-200 bg-white text-xs font-mono focus:outline-none focus:border-terracotta"
+                    />
+                  </div>
                 )}
 
-                {activeTab === 'presets' && (
-                  <p className="text-[11px] text-stone-500">Choose a preset photo from the gallery below:</p>
+                {activePhotoTab === 'gallery' && (
+                  <span className="block font-semibold text-stone-700 text-[11px]">Click a photo from the gallery below:</span>
                 )}
               </div>
             </div>
 
-            {/* Preset Thumbnails Grid */}
-            {activeTab === 'presets' && (
-              <div className="grid grid-cols-4 gap-2 pt-2 max-h-36 overflow-y-auto pr-1">
+            {/* Gallery Thumbnail Grid */}
+            {activePhotoTab === 'gallery' && (
+              <div className="grid grid-cols-5 gap-1.5 max-h-24 overflow-y-auto pt-1 pr-1 border-t border-stone-200/60">
                 {PRESET_IMAGES.map((preset) => {
                   const isSelected = formData.image === preset.url;
                   return (
@@ -355,18 +395,15 @@ export default function AddItemModal({ isOpen, onClose, onSave, editItem = null 
                       key={preset.id}
                       type="button"
                       onClick={() => setFormData({ ...formData, image: preset.url })}
-                      className={`relative h-14 rounded-lg overflow-hidden border-2 transition-all group text-left ${
+                      className={`relative h-10 rounded-lg overflow-hidden border transition-all ${
                         isSelected ? 'border-terracotta ring-2 ring-terracotta/30' : 'border-stone-200 hover:border-amber-400'
                       }`}
+                      title={preset.title}
                     >
                       <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-stone-950/40 group-hover:bg-stone-950/20 transition-all" />
-                      <span className="absolute bottom-0.5 left-1 text-[9px] font-extrabold text-white line-clamp-1 drop-shadow-sm">
-                        {preset.title}
-                      </span>
                       {isSelected && (
-                        <div className="absolute top-1 right-1 bg-terracotta text-white p-0.5 rounded-full">
-                          <Check size={10} />
+                        <div className="absolute top-0.5 right-0.5 bg-terracotta text-white p-0.5 rounded-full">
+                          <Check size={8} />
                         </div>
                       )}
                     </button>

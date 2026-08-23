@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ShieldCheck, Plus, Search, Tag, Eye, Gift } from 'lucide-react';
+import { MapPin, ShieldCheck, Plus, Search, Tag, Eye } from 'lucide-react';
 import { getItems, addItem, updateItem, deleteItem } from '../utils/itemStorage';
 import AddItemModal from '../components/AddItemModal';
 import ViewItemModal from '../components/ViewItemModal';
@@ -64,7 +64,7 @@ export default function Dashboard({ currentUser, onNavigate }) {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       
-      {/* Top Header & Separate Action Buttons Row */}
+      {/* Top Header & Merged Action Button Row */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
@@ -77,34 +77,18 @@ export default function Dashboard({ currentUser, onNavigate }) {
           />
         </div>
 
-        {/* Separated Action Buttons */}
-        <div className="flex gap-2 shrink-0">
-          {/* Add Item Button */}
-          <button
-            onClick={() => {
-              setEditingItem(null);
-              setDefaultIsFree(false);
-              setIsAddModalOpen(true);
-            }}
-            className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all flex-1 md:flex-none"
-          >
-            <Plus size={18} />
-            <span>+ Add Item</span>
-          </button>
-
-          {/* Share / Free Gift Button */}
-          <button
-            onClick={() => {
-              setEditingItem(null);
-              setDefaultIsFree(true);
-              setIsAddModalOpen(true);
-            }}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all flex-1 md:flex-none"
-          >
-            <Gift size={18} />
-            <span>🎁 Share Free Gift</span>
-          </button>
-        </div>
+        {/* Merged Action Button */}
+        <button
+          onClick={() => {
+            setEditingItem(null);
+            setDefaultIsFree(false);
+            setIsAddModalOpen(true);
+          }}
+          className="bg-terracotta hover:bg-terracotta-hover text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all shrink-0"
+        >
+          <Plus size={18} />
+          <span>+ Share / Add Item</span>
+        </button>
       </div>
 
       {/* Category Pills */}
@@ -124,55 +108,19 @@ export default function Dashboard({ currentUser, onNavigate }) {
         ))}
       </div>
 
-      {/* Hero Eco Banner & Widget Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Eco Counter Banner */}
-        <div className="md:col-span-2 bg-gradient-to-r from-emerald-800 to-teal-900 text-white rounded-3xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
-          <div className="relative z-10">
-            <span className="bg-emerald-700/80 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider text-emerald-200">
-              Campus Sustainability
-            </span>
-            <h2 className="text-2xl font-extrabold font-serif mt-2 mb-1">
-              "Anand Niketan" Re-homing Hub
-            </h2>
-            <p className="text-xs text-emerald-100 font-medium max-w-md">
-              Share Charkha crafts, last year papers, GATE notes, textbooks, robotics projects, and hostel gear with fellow students.
-            </p>
-          </div>
-          <div className="mt-4 relative z-10 flex flex-wrap gap-2 items-center">
-            <div className="bg-emerald-600/90 text-white px-4 py-2 rounded-full font-extrabold text-xs shadow-md">
-              1,240+ Items Shared 🌿
-            </div>
-            <div className="bg-emerald-950/60 backdrop-blur-md text-emerald-200 px-4 py-2 rounded-full font-bold text-xs">
-              ₹2.5 Lakhs Student Savings
-            </div>
-          </div>
-        </div>
-
-        {/* Most Wanted */}
-        <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-stone-400 mb-1">Hostel Pickups & Exchanges</h4>
-            <div className="text-2xl font-extrabold text-terracotta">Zero-Fee Peer Sharing</div>
-            <p className="text-xs text-stone-500 font-medium mt-1">
-              Verified campus handovers at library gates & hostel common rooms.
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('listings')}
-            className="mt-3 w-full py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition-all border border-stone-200"
-          >
-            View My Shared Items
-          </button>
-        </div>
-      </div>
-
       {/* Items Grid Header */}
       <div className="flex items-center justify-between pt-2">
         <h3 className="text-lg font-extrabold text-stone-800 font-serif">
           {selectedCategory === 'All' ? 'All Shared Items' : `${selectedCategory} Listings`}
           <span className="ml-2 text-xs font-semibold text-stone-400">({filteredItems.length} available)</span>
         </h3>
+        
+        <button
+          onClick={() => onNavigate('listings')}
+          className="px-4 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition-all border border-stone-200"
+        >
+          View My Shared Items
+        </button>
       </div>
 
       {/* Items Grid */}
