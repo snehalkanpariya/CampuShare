@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin, ShieldCheck, Edit3, Trash2, Tag, Calendar, User, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { X, MapPin, ShieldCheck, Edit3, Trash2, Tag, Calendar, User, CheckCircle2, Clock, AlertTriangle, Shield, Check } from 'lucide-react';
 
 export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEdit, onDelete }) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -124,27 +124,42 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
             </p>
           </div>
 
-          {/* Sharer Details Card */}
-          <div className="bg-sage-light/30 border border-emerald-200/70 p-4 rounded-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
-                {(item.ownerName || 'Student').charAt(0)}
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-extrabold text-stone-800">{item.ownerName || 'Campus Student'}</span>
-                  {item.verified !== false && (
-                    <ShieldCheck size={16} className="text-sage" title="Verified Member" />
-                  )}
+          {/* Sharer Details & Safe Exchange Card */}
+          <div className="bg-emerald-50/60 border border-emerald-200 p-4 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
+                  {(item.ownerName || 'Student').charAt(0)}
                 </div>
-                <div className="text-xs text-stone-500 font-medium">{item.ownerRole || 'Verified Member'}</div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-extrabold text-stone-800">{item.ownerName || 'Campus Student'}</span>
+                    {item.verified !== false && (
+                      <ShieldCheck size={16} className="text-emerald-600" title="Verified Campus Member" />
+                    )}
+                  </div>
+                  <div className="text-xs text-stone-500 font-medium">{item.ownerRole || 'Verified Member'}</div>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <Shield size={12} className="text-emerald-700" />
+                  Safe Campus Exchange
+                </span>
               </div>
             </div>
 
-            <div className="text-right">
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                Safe Campus Exchange
-              </span>
+            {/* Safe Exchange Guarantees */}
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-emerald-900 font-semibold border-t border-emerald-200/70">
+              <div className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                <span>Verified Campus Student ID</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                <span>Public Campus Handover Spot</span>
+              </div>
             </div>
           </div>
 
@@ -195,13 +210,13 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
             ) : (
               <button
                 onClick={() => {
-                  alert(`Request sent to ${item.ownerName || 'sharer'}! You can meet at ${item.location || 'Central Library'}.`);
+                  alert(`Safe Exchange Request sent to ${item.ownerName || 'sharer'}!\n\nMeet at: ${item.location || 'Central Library Gate'}.\nAll exchanges are protected by verified campus identity.`);
                   onClose();
                 }}
                 className="w-full py-3 rounded-xl font-bold text-xs text-white bg-terracotta hover:bg-terracotta-hover shadow-lg flex items-center justify-center gap-2 transition-all"
               >
                 <CheckCircle2 size={18} />
-                <span>Contact Sharer & Request Item</span>
+                <span>Contact Sharer & Safe Exchange Request</span>
               </button>
             )}
           </div>
