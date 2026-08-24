@@ -63,3 +63,26 @@ export async function loginApi(data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function forgotPasswordApi(data) {
+  return fetchWithFallback(AUTH_URLS, '/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function resetPasswordApi(data) {
+  return fetchWithFallback(AUTH_URLS, '/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function resetPasswordSeniorApi(formData) {
+  return fetchWithFallback(AUTH_URLS, '/reset-password/senior', {
+    method: 'POST',
+    body: formData,
+  });
+}

@@ -10,6 +10,7 @@ public class SeniorRegisterRequest {
     private String name;
 
     @NotBlank(message = "Enrollment number is required")
+    @jakarta.validation.constraints.Pattern(regexp = "^\\d{12}$", message = "Enrollment number must be exactly 12 digits (e.g. 250160450049)")
     private String enrollmentNumber;
 
     @NotBlank(message = "Department is required")

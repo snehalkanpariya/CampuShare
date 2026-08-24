@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
@@ -36,6 +38,26 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/forgot-password")
+    public RegisterResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return authService.forgotPassword(request);
+    }
+
+    @PostMapping("/reset-password")
+    public RegisterResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return authService.resetPassword(request);
+    }
+
+    @PostMapping("/reset-password/senior")
+    public ResponseEntity<RegisterResponse> resetPasswordSenior(
+            @RequestParam("enrollmentNumber") String enrollmentNumber,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("file") MultipartFile file) {
+        RegisterResponse response = authService.resetPasswordSenior(enrollmentNumber, name, newPassword, file);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/internal/user")

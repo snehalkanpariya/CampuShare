@@ -15,12 +15,22 @@ export default function SeniorRegister({ onNavigate, setVerificationData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    const trimmedEnrollment = formData.enrollmentNumber.trim();
+    if (!/^\d{12}$/.test(trimmedEnrollment)) {
+      setError('Enrollment number must be exactly 12 digits (e.g. 250160450049)');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const result = await registerSeniorApi(formData);
+      const result = await registerSeniorApi({
+        ...formData,
+        enrollmentNumber: trimmedEnrollment
+      });
       setVerificationData({
-        enrollmentNumber: formData.enrollmentNumber,
+        enrollmentNumber: trimmedEnrollment,
         name: formData.name,
         email: result.email,
         role: 'SENIOR'
@@ -32,6 +42,10 @@ export default function SeniorRegister({ onNavigate, setVerificationData }) {
       setLoading(false);
     }
   };
+
+  const autoEmail = formData.enrollmentNumber.trim() 
+    ? `${formData.enrollmentNumber.trim().toLowerCase()}.gvp@gujaratvidyapith.org` 
+    : '250160450049.gvp@gujaratvidyapith.org';
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-4">
@@ -75,17 +89,21 @@ export default function SeniorRegister({ onNavigate, setVerificationData }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1">Enrollment Number</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1">Enrollment Number (12 Digits)</label>
             <div className="relative">
               <Hash size={18} className="absolute left-3.5 top-3 text-stone-400" />
               <input
                 type="text"
                 required
-                placeholder="250160450013"
+                maxLength={12}
+                placeholder="250160450049"
                 value={formData.enrollmentNumber}
                 onChange={(e) => setFormData({ ...formData, enrollmentNumber: e.target.value })}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 focus:border-terracotta outline-none text-sm font-medium"
               />
+            </div>
+            <div className="text-xs text-stone-500 font-semibold mt-1.5">
+              GVP Account ID: {autoEmail}
             </div>
           </div>
 

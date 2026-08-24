@@ -73,7 +73,7 @@ export default function Login({ onNavigate, setCurrentUser }) {
               <input
                 type="text"
                 required
-                placeholder="24MCA001 or 250160450013"
+                placeholder="250160450049 or 250160450049.gvp@gujaratvidyapith.org"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 focus:border-terracotta outline-none text-sm font-medium"

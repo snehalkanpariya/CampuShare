@@ -1,12 +1,12 @@
-com\campusshare\verificationservice\dto\VerificationResponse$VerificationResponseBuilder.class
-com\campusshare\verificationservice\entity\Role.class
-com\campusshare\verificationservice\VerificationServiceApplication.class
-com\campusshare\verificationservice\entity\VerificationStatus.class
 com\campusshare\verificationservice\controller\VerificationController.class
 com\campusshare\verificationservice\dto\VerificationResponse.class
 com\campusshare\verificationservice\service\EmailService.class
 com\campusshare\verificationservice\entity\User$UserBuilder.class
 com\campusshare\verificationservice\entity\VerificationMethod.class
+com\campusshare\verificationservice\service\OcrService.class
+com\campusshare\verificationservice\dto\VerificationResponse$VerificationResponseBuilder.class
+com\campusshare\verificationservice\entity\Role.class
+com\campusshare\verificationservice\VerificationServiceApplication.class
+com\campusshare\verificationservice\entity\VerificationStatus.class
 com\campusshare\verificationservice\repository\UserRepository.class
 com\campusshare\verificationservice\entity\User.class
-com\campusshare\verificationservice\service\OcrService.class

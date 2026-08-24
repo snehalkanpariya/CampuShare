@@ -29,9 +29,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public RegisterResponse registerJunior(JuniorRegisterRequest request) {
-        String generatedEmail = request.getEnrollmentNumber().toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
+        if (request.getEnrollmentNumber() == null || !request.getEnrollmentNumber().trim().matches("^\\d{12}$")) {
+            throw new RuntimeException("Enrollment number must be exactly 12 digits (e.g. 250160450049)");
+        }
+        String generatedEmail = request.getEnrollmentNumber().trim().toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
 
-        User existingUser = userRepository.findByEnrollmentNumber(request.getEnrollmentNumber())
+        User existingUser = userRepository.findByEnrollmentNumber(request.getEnrollmentNumber().trim())
                 .or(() -> userRepository.findByEmail(generatedEmail))
                 .orElse(null);
 
@@ -44,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
         User user = (existingUser != null) ? existingUser : new User();
         user.setName(request.getName());
         user.setEmail(generatedEmail);
-        user.setEnrollmentNumber(request.getEnrollmentNumber());
+        user.setEnrollmentNumber(request.getEnrollmentNumber().trim());
         user.setDepartment(request.getDepartment());
         user.setYear(request.getYear());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -79,9 +82,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public RegisterResponse registerSenior(SeniorRegisterRequest request) {
-        String generatedEmail = request.getEnrollmentNumber().toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
+        if (request.getEnrollmentNumber() == null || !request.getEnrollmentNumber().trim().matches("^\\d{12}$")) {
+            throw new RuntimeException("Enrollment number must be exactly 12 digits (e.g. 250160450049)");
+        }
+        String generatedEmail = request.getEnrollmentNumber().trim().toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
 
-        User existingUser = userRepository.findByEnrollmentNumber(request.getEnrollmentNumber())
+        User existingUser = userRepository.findByEnrollmentNumber(request.getEnrollmentNumber().trim())
                 .or(() -> userRepository.findByEmail(generatedEmail))
                 .orElse(null);
 
@@ -92,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
         User user = (existingUser != null) ? existingUser : new User();
         user.setName(request.getName());
         user.setEmail(generatedEmail);
-        user.setEnrollmentNumber(request.getEnrollmentNumber());
+        user.setEnrollmentNumber(request.getEnrollmentNumber().trim());
         user.setDepartment(request.getDepartment());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.SENIOR);
@@ -147,11 +153,30 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private User findUserByEmailOrEnrollment(String input) {
+        if (input == null || input.isBlank()) {
+            throw new RuntimeException("Email or Enrollment Number is required");
+        }
+        String trimmed = input.trim();
+        String generatedEmail = trimmed.contains("@") ? trimmed : trimmed.toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
+
+        return userRepository.findByEmailIgnoreCase(trimmed)
+                .or(() -> userRepository.findByEnrollmentNumberIgnoreCase(trimmed))
+                .or(() -> userRepository.findByEmailIgnoreCase(generatedEmail))
+                .or(() -> userRepository.findByEmail(trimmed))
+                .or(() -> userRepository.findByEnrollmentNumber(trimmed))
+                .or(() -> userRepository.findByEmail(generatedEmail))
+                .or(() -> userRepository.findAll().stream()
+                        .filter(u -> (u.getEnrollmentNumber() != null && u.getEnrollmentNumber().equalsIgnoreCase(trimmed))
+                                  || (u.getEmail() != null && u.getEmail().equalsIgnoreCase(generatedEmail))
+                                  || (u.getEmail() != null && u.getEmail().equalsIgnoreCase(trimmed)))
+                        .findFirst())
+                .orElseThrow(() -> new RuntimeException("No account found for email or enrollment number: " + input));
+    }
+
     @Override
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .or(() -> userRepository.findByEnrollmentNumber(request.getEmail()))
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+        User user = findUserByEmailOrEnrollment(request.getEmail());
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
@@ -177,17 +202,130 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User getUserByEnrollmentNumber(String enrollmentNumber) {
-        String trimmed = (enrollmentNumber != null) ? enrollmentNumber.trim() : "";
-        String generatedEmail = trimmed.toLowerCase() + ".gvp" + GVP_EMAIL_DOMAIN;
+    public RegisterResponse forgotPassword(ForgotPasswordRequest request) {
+        User user = findUserByEmailOrEnrollment(request.getEmail());
 
-        return userRepository.findByEnrollmentNumber(trimmed)
-                .or(() -> userRepository.findByEmail(generatedEmail))
-                .or(() -> userRepository.findAll().stream()
-                        .filter(u -> (u.getEnrollmentNumber() != null && u.getEnrollmentNumber().equalsIgnoreCase(trimmed))
-                                  || (u.getEmail() != null && u.getEmail().equalsIgnoreCase(generatedEmail)))
-                        .findFirst())
-                .orElseThrow(() -> new RuntimeException("No student account found for Enrollment Number: " + enrollmentNumber));
+        String generatedOtp = String.format("%06d", new SecureRandom().nextInt(1000000));
+
+        user.setOtp(generatedOtp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        // Call verification-service to dispatch Password Reset OTP email
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String sendOtpUrl = "http://localhost:8082/api/verify/email/send-otp?email=" + user.getEmail() + "&otp=" + generatedOtp + "&type=FORGOT_PASSWORD";
+            restTemplate.postForObject(sendOtpUrl, null, String.class);
+            log.info("Triggered Password Reset OTP email dispatch via verification-service for {}", user.getEmail());
+        } catch (Exception e) {
+            log.warn("Could not dispatch Password Reset OTP email via verification-service: {}", e.getMessage());
+        }
+
+        return RegisterResponse.builder()
+                .message("Password reset OTP sent to " + user.getEmail())
+                .email(user.getEmail())
+                .build();
+    }
+
+    @Override
+    public RegisterResponse resetPassword(ResetPasswordRequest request) {
+        User user = findUserByEmailOrEnrollment(request.getEmail());
+
+        if (user.getOtp() == null || user.getOtpExpiry() == null) {
+            throw new RuntimeException("No active password reset OTP found for this user");
+        }
+
+        if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP has expired. Please request a new OTP.");
+        }
+
+        if (!user.getOtp().equals(request.getOtp().trim())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        return RegisterResponse.builder()
+                .message("Password reset successfully. Please log in with your new password.")
+                .email(user.getEmail())
+                .build();
+    }
+
+    @Override
+    public RegisterResponse resetPasswordSenior(String enrollmentNumber, String name, String newPassword, org.springframework.web.multipart.MultipartFile file) {
+        if (enrollmentNumber == null || !enrollmentNumber.trim().matches("^\\d{12}$")) {
+            throw new RuntimeException("Enrollment number must be exactly 12 digits (e.g. 250160450049)");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters long");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Marksheet document file is required for Senior password reset");
+        }
+
+        String trimmedEnrollment = enrollmentNumber.trim();
+        User user = userRepository.findByEnrollmentNumber(trimmedEnrollment)
+                .or(() -> userRepository.findByEnrollmentNumberIgnoreCase(trimmedEnrollment))
+                .orElseThrow(() -> new RuntimeException("No senior student account found for Enrollment Number: " + trimmedEnrollment));
+
+        if (user.getRole() != Role.SENIOR) {
+            throw new RuntimeException("This password reset method is for Senior Students. Junior students must use Email OTP reset.");
+        }
+
+        // Call verification-service OCR to verify marksheet
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String ocrUrl = "http://localhost:8082/api/verify/ocr/marksheet";
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
+
+            org.springframework.util.MultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
+            body.add("file", file.getResource());
+            body.add("name", (name != null && !name.isBlank()) ? name.trim() : user.getName());
+            body.add("enrollmentNumber", trimmedEnrollment);
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(ocrUrl, requestEntity, java.util.Map.class);
+
+            if (response.getBody() == null || !Boolean.TRUE.equals(response.getBody().get("success"))) {
+                String msg = (response.getBody() != null && response.getBody().get("message") != null) 
+                        ? response.getBody().get("message").toString() 
+                        : "Marksheet verification failed";
+                throw new RuntimeException("Password reset failed: " + msg);
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error communicating with verification-service during Senior password reset: {}", e.getMessage());
+            throw new RuntimeException("Could not verify marksheet with verification-service: " + e.getMessage());
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setVerified(true);
+        user.setVerificationStatus(VerificationStatus.VERIFIED);
+        user.setVerifiedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.info("Successfully reset password for Senior User: enrollmentNumber={}", trimmedEnrollment);
+
+        return RegisterResponse.builder()
+                .message("Senior student password reset successfully via Marksheet OCR Verification! You can now log in.")
+                .email(user.getEmail())
+                .build();
+    }
+
+    @Override
+    public User getUserByEnrollmentNumber(String enrollmentNumber) {
+        return findUserByEmailOrEnrollment(enrollmentNumber);
     }
 
     @Override

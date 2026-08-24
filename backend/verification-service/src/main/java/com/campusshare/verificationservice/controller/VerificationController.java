@@ -20,11 +20,12 @@ public class VerificationController {
     @PostMapping("/email/send-otp")
     public ResponseEntity<String> sendOtp(
             @RequestParam(value = "email", required = false) String email,
-            @RequestParam(value = "otp", required = false) String otp) {
+            @RequestParam(value = "otp", required = false) String otp,
+            @RequestParam(value = "type", required = false, defaultValue = "REGISTRATION") String type) {
         if (email == null || email.isBlank() || otp == null || otp.isBlank()) {
             return ResponseEntity.badRequest().body("Both 'email' and 'otp' parameters are required.");
         }
-        emailService.sendOtpEmail(email, otp);
+        emailService.sendOtpEmail(email, otp, type);
         return ResponseEntity.ok("OTP dispatched to " + email);
     }
 
