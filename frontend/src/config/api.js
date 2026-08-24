@@ -7,19 +7,28 @@ async function fetchWithFallback(urlList, path, options) {
   for (const baseUrl of urlList) {
     try {
       const response = await fetch(`${baseUrl}${path}`, options);
-      const resData = await response.json();
+      const resData = await response.json().catch(() => ({}));
       
       if (!response.ok) {
-        throw new Error(resData.message || resData.error || 'Server returned error status ' + response.status);
+        const errorMsg = resData.message || resData.error || ('Server returned error status ' + response.status);
+        if (response.status === 404) {
+          lastError = new Error(errorMsg);
+          continue;
+        }
+        throw new Error(errorMsg);
       }
       return resData;
     } catch (err) {
-      if (err.message && !err.message.includes('Failed to fetch')) {
+      if (err.message && !err.message.includes('Failed to fetch') && !err.message.includes('404') && !err.message.includes('Not Found')) {
         // High level server error response (e.g. 400 Bad Request, unverified account)
         throw err;
       }
       lastError = err;
     }
+  }
+
+  if (lastError && lastError.message && (lastError.message.includes('404') || lastError.message.includes('Not Found'))) {
+    throw new Error('Change password endpoint is not loaded on the running backend server. Please restart auth-service (8081).');
   }
 
   throw new Error(lastError ? lastError.message : 'Backend services are offline. Please ensure auth-service (8081) and verification-service (8082) are running.');
@@ -84,5 +93,19 @@ export async function resetPasswordSeniorApi(formData) {
   return fetchWithFallback(AUTH_URLS, '/reset-password/senior', {
     method: 'POST',
     body: formData,
+  });
+}
+
+export async function changePasswordApi(data) {
+  const token = localStorage.getItem('campus_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetchWithFallback(AUTH_URLS, '/change-password', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
   });
 }

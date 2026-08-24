@@ -50,6 +50,11 @@ public class AuthController {
         return authService.resetPassword(request);
     }
 
+    @PostMapping("/change-password")
+    public RegisterResponse changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        return authService.changePassword(request);
+    }
+
     @PostMapping("/reset-password/senior")
     public ResponseEntity<RegisterResponse> resetPasswordSenior(
             @RequestParam("enrollmentNumber") String enrollmentNumber,

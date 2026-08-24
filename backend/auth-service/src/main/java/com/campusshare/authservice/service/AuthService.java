@@ -16,6 +16,7 @@ public interface AuthService {
     RegisterResponse forgotPassword(ForgotPasswordRequest request);
     RegisterResponse resetPassword(ResetPasswordRequest request);
     RegisterResponse resetPasswordSenior(String enrollmentNumber, String name, String newPassword, MultipartFile file);
+    RegisterResponse changePassword(ChangePasswordRequest request);
 
     User getUserByEnrollmentNumber(String enrollmentNumber);
     void activateSenior(String enrollmentNumber);

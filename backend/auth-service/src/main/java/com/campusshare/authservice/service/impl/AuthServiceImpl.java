@@ -166,8 +166,10 @@ public class AuthServiceImpl implements AuthService {
                 .or(() -> userRepository.findByEmail(trimmed))
                 .or(() -> userRepository.findByEnrollmentNumber(trimmed))
                 .or(() -> userRepository.findByEmail(generatedEmail))
+                .or(() -> userRepository.findById(trimmed))
                 .or(() -> userRepository.findAll().stream()
-                        .filter(u -> (u.getEnrollmentNumber() != null && u.getEnrollmentNumber().equalsIgnoreCase(trimmed))
+                        .filter(u -> (u.getId() != null && u.getId().equalsIgnoreCase(trimmed))
+                                  || (u.getEnrollmentNumber() != null && u.getEnrollmentNumber().equalsIgnoreCase(trimmed))
                                   || (u.getEmail() != null && u.getEmail().equalsIgnoreCase(generatedEmail))
                                   || (u.getEmail() != null && u.getEmail().equalsIgnoreCase(trimmed)))
                         .findFirst())
@@ -192,6 +194,9 @@ public class AuthServiceImpl implements AuthService {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .enrollmentNumber(user.getEnrollmentNumber())
+                .department(user.getDepartment())
+                .year(user.getYear())
                 .role(user.getRole())
                 .build();
 
@@ -338,5 +343,56 @@ public class AuthServiceImpl implements AuthService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
         log.info("Activated Senior User in MongoDB: enrollmentNumber={}, email={}, method=MARKSHEET_OCR", enrollmentNumber, user.getEmail());
+    }
+
+    @Override
+    public RegisterResponse changePassword(ChangePasswordRequest request) {
+        if (request.getOldPassword() == null || request.getOldPassword().isBlank()) {
+            throw new RuntimeException("Current password is required");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters long");
+        }
+
+        String userIdentifier = request.getEmail();
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if ((userIdentifier == null || userIdentifier.isBlank() || userIdentifier.equalsIgnoreCase("student@gujaratvidyapith.org")) 
+                && auth != null && auth.getName() != null && !auth.getName().equals("anonymousUser")) {
+            userIdentifier = auth.getName();
+        }
+
+        if (userIdentifier == null || userIdentifier.isBlank()) {
+            throw new RuntimeException("User identity could not be found");
+        }
+
+        User user;
+        try {
+            user = findUserByEmailOrEnrollment(userIdentifier);
+        } catch (Exception e) {
+            if (auth != null && auth.getName() != null && !auth.getName().equals("anonymousUser") && !auth.getName().equalsIgnoreCase(userIdentifier)) {
+                user = findUserByEmailOrEnrollment(auth.getName());
+            } else {
+                throw e;
+            }
+        }
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new RuntimeException("New password cannot be the same as the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.info("Successfully changed password for user: email={}", user.getEmail());
+
+        return RegisterResponse.builder()
+                .message("Password changed successfully!")
+                .email(user.getEmail())
+                .build();
     }
 }
