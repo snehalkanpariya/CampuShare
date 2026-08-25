@@ -1,6 +1,7 @@
 const AUTH_URLS = ['http://localhost:8081/api/auth', 'http://localhost:8080/api/auth'];
 const USER_URLS = ['http://localhost:8081/api/users', 'http://localhost:8080/api/users'];
 const VERIFY_URLS = ['http://localhost:8082/api/verify', 'http://localhost:8080/api/verify'];
+const USER_URLS = ['http://localhost:8081/api/users', 'http://localhost:8080/api/users'];
 
 async function fetchWithFallback(urlList, path, options) {
   let lastError = null;
@@ -75,3 +76,61 @@ export async function getUserProfileApi(token) {
   });
 }
 
+<<<<<<< Updated upstream
+=======
+export async function resetPasswordApi(data) {
+  return fetchWithFallback(AUTH_URLS, '/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function resetPasswordSeniorApi(formData) {
+  return fetchWithFallback(AUTH_URLS, '/reset-password/senior', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+export async function changePasswordApi(data) {
+  const token = localStorage.getItem('campus_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetchWithFallback(AUTH_URLS, '/change-password', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getProfileApi() {
+  const token = localStorage.getItem('campus_token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetchWithFallback(USER_URLS, '/me', {
+    method: 'GET',
+    headers,
+  });
+}
+
+export async function updateProfileApi(data) {
+  const token = localStorage.getItem('campus_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetchWithFallback(USER_URLS, '/me', {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data),
+  });
+}
+>>>>>>> Stashed changes

@@ -27,8 +27,12 @@ public class User {
 
     private String department;
     private String year;
+<<<<<<< Updated upstream
     private String semester;
     private String profilePicture;
+=======
+    private Integer semester;
+>>>>>>> Stashed changes
     private String password;
 
     private Role role;
