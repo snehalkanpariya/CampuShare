@@ -16,6 +16,10 @@ spring:
             uri: lb://VERIFICATION-SERVICE
             predicates:
               - Path=/api/verify/**
+          - id: item-service
+            uri: lb://ITEM-SERVICE
+            predicates:
+              - Path=/api/items/**
 
 eureka:
   client:

@@ -19,46 +19,26 @@ public class VerificationController {
 
     @PostMapping("/email/send-otp")
     public ResponseEntity<String> sendOtp(
-            @RequestParam(value = "email", required = false) String email,
-            @RequestParam(value = "otp", required = false) String otp) {
-        if (email == null || email.isBlank() || otp == null || otp.isBlank()) {
-            return ResponseEntity.badRequest().body("Both 'email' and 'otp' parameters are required.");
-        }
+            @RequestParam String email,
+            @RequestParam String otp) {
+
         emailService.sendOtpEmail(email, otp);
         return ResponseEntity.ok("OTP dispatched to " + email);
     }
 
     @PostMapping("/ocr/marksheet")
-    public ResponseEntity<?> verifySeniorMarksheet(
-            @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "enrollmentNumber", required = false) String enrollmentNumber,
-            @RequestParam(value = "enrollmentnumber", required = false) String enrollmentnumberAlt) {
+    public ResponseEntity<VerificationResponse> verifySeniorMarksheet(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("name") String name,
+            @RequestParam("enrollmentNumber") String enrollmentNumber) {
 
-        String finalEnrollmentNumber = (enrollmentNumber != null && !enrollmentNumber.isBlank())
-                ? enrollmentNumber
-                : enrollmentnumberAlt;
+        VerificationResponse response =
+                ocrService.verifySeniorMarksheet(
+                        file,
+                        name,
+                        enrollmentNumber
+                );
 
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().body(VerificationResponse.builder()
-                    .success(false)
-                    .message("Missing required parameter: 'file' (Must select a valid file in Postman form-data)")
-                    .build());
-        }
-        if (name == null || name.isBlank()) {
-            return ResponseEntity.badRequest().body(VerificationResponse.builder()
-                    .success(false)
-                    .message("Missing required parameter: 'name'")
-                    .build());
-        }
-        if (finalEnrollmentNumber == null || finalEnrollmentNumber.isBlank()) {
-            return ResponseEntity.badRequest().body(VerificationResponse.builder()
-                    .success(false)
-                    .message("Missing required parameter: 'enrollmentNumber'")
-                    .build());
-        }
-
-        VerificationResponse response = ocrService.verifySeniorMarksheet(file, name, finalEnrollmentNumber);
         return ResponseEntity.ok(response);
     }
 }
