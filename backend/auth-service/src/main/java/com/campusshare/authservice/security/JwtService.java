@@ -16,19 +16,20 @@ public class JwtService {
     @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String secretKey;
 
-    @Value("${jwt.expiration:86400000}") // 24 hours in ms
+    @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String email) {
+        Date now = new Date();
+
         return Jwts.builder()
                 .subject(email)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + jwtExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -38,8 +39,7 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, String email) {
-        final String extractedEmail = extractEmail(token);
-        return (extractedEmail.equals(email)) && !isTokenExpired(token);
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

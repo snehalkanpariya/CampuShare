@@ -20,37 +20,36 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping
-    public ResponseEntity<ItemResponseDTO> createItem(@Valid @RequestBody ItemRequestDTO requestDTO) {
-        ItemResponseDTO responseDTO = itemService.createItem(requestDTO);
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
+    public ResponseEntity<ItemResponseDTO> createItem(
+            @Valid @RequestBody ItemRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(itemService.createItem(request));
     }
 
     @GetMapping
     public ResponseEntity<List<ItemResponseDTO>> getAllItems(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String search) {
-        List<ItemResponseDTO> items = itemService.getAllItems(category, search);
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(itemService.getAllItems(category, search));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItemResponseDTO> getItemById(@PathVariable String id) {
-        ItemResponseDTO item = itemService.getItemById(id);
-        return ResponseEntity.ok(item);
+    public ResponseEntity<ItemResponseDTO> getItemById(
+            @PathVariable String id) {
+        return ResponseEntity.ok(itemService.getItemById(id));
     }
 
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<List<ItemResponseDTO>> getItemsByOwner(@PathVariable String ownerId) {
-        List<ItemResponseDTO> items = itemService.getItemsByOwner(ownerId);
-        return ResponseEntity.ok(items);
+    public ResponseEntity<List<ItemResponseDTO>> getItemsByOwner(
+            @PathVariable String ownerId) {
+        return ResponseEntity.ok(itemService.getItemsByOwner(ownerId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ItemResponseDTO> updateItem(
             @PathVariable String id,
-            @Valid @RequestBody ItemRequestDTO requestDTO) {
-        ItemResponseDTO updatedItem = itemService.updateItem(id, requestDTO);
-        return ResponseEntity.ok(updatedItem);
+            @Valid @RequestBody ItemRequestDTO request) {
+        return ResponseEntity.ok(itemService.updateItem(id, request));
     }
 
     @DeleteMapping("/{id}")
