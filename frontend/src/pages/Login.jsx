@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { loginApi } from '../config/api';
 import { Lock, Mail, ArrowRight, ShieldAlert } from 'lucide-react';
 import CharkhaLogo from '../components/CharkhaLogo';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Login({ onNavigate, setCurrentUser }) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -27,9 +29,9 @@ export default function Login({ onNavigate, setCurrentUser }) {
         verified: true
       });
 
-      onNavigate('dashboard');
+      onNavigate(result.user.role === 'ADMIN' ? 'admin-dashboard' : 'dashboard');
     } catch (err) {
-      setError(err.message || 'Login failed. Invalid credentials or unverified student account.');
+      setError(err.message || 'Login failed. Invalid credentials or unverified account.');
     } finally {
       setLoading(false);
     }
@@ -41,12 +43,15 @@ export default function Login({ onNavigate, setCurrentUser }) {
         <div className="text-center">
           <CharkhaLogo size={64} className="mx-auto mb-3" />
           <h2 className="text-3xl font-extrabold font-serif text-terracotta">
-            CampuShare Login
+            {t('loginTitle', 'CampuShare Login')}
           </h2>
+          <p className="text-xs text-stone-500 font-medium mt-1">
+            {t('loginSubtitle', 'Sign in with your Gujarat Vidyapith credentials')}
+          </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-2xl text-xs font-bold border border-red-200 space-y-2">
+          <div className="bg-red-50 text-red-700 p-4 rounded-2xl text-xs font-bold border border-red-200 space-y-2 animate-fade-in">
             <div className="flex items-center gap-2 text-sm font-extrabold">
               <ShieldAlert size={18} /> Login Unsuccessful
             </div>
@@ -55,9 +60,9 @@ export default function Login({ onNavigate, setCurrentUser }) {
               <button
                 type="button"
                 onClick={() => onNavigate('role-select')}
-                className="mt-2 bg-terracotta text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                className="mt-2 bg-terracotta text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm cursor-pointer"
               >
-                Complete Verification Now
+                {t('completeVerification', 'Complete Verification Now')}
               </button>
             )}
           </div>
@@ -66,14 +71,14 @@ export default function Login({ onNavigate, setCurrentUser }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1">
-              GVP Email or Enrollment Number
+              {t('identifierLabel', 'GVP Email or Enrollment Number')}
             </label>
             <div className="relative">
               <Mail size={18} className="absolute left-3.5 top-3 text-stone-400" />
               <input
                 type="text"
                 required
-                placeholder="24MCA001 or 250160450013"
+                placeholder={t('identifierPlaceholder', '24MCA001 or 250160450013')}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 focus:border-terracotta outline-none text-sm font-medium"
@@ -83,13 +88,15 @@ export default function Login({ onNavigate, setCurrentUser }) {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-stone-600">Password</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-600">
+                {t('password', 'Password')}
+              </label>
               <button
                 type="button"
                 onClick={() => onNavigate('forgot-password')}
                 className="text-xs text-terracotta font-bold hover:underline"
               >
-                Forgot Password?
+                {t('forgotPassword', 'Forgot Password?')}
               </button>
             </div>
             <div className="relative">
@@ -97,7 +104,7 @@ export default function Login({ onNavigate, setCurrentUser }) {
               <input
                 type="password"
                 required
-                placeholder="Enter password"
+                placeholder={t('passwordPlaceholder', 'Enter password')}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 focus:border-terracotta outline-none text-sm font-medium"
@@ -108,20 +115,20 @@ export default function Login({ onNavigate, setCurrentUser }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-3.5 rounded-full font-bold text-base shadow-lg shadow-terracotta/25 flex items-center justify-center gap-2 transition-all mt-4 disabled:opacity-50"
+            className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-3.5 rounded-full font-bold text-base shadow-lg shadow-terracotta/25 flex items-center justify-center gap-2 transition-all mt-4 disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Authenticating...' : 'Sign In'} <ArrowRight size={18} />
+            {loading ? t('processing', 'Authenticating...') : t('loginButton', 'Sign In')} <ArrowRight size={18} />
           </button>
         </form>
 
         <div className="text-center text-xs font-bold text-stone-500 pt-2 border-t border-stone-100">
-          Don't have an account?{' '}
+          {t('noAccount', "Don't have an account?")}{' '}
           <button
             type="button"
             onClick={() => onNavigate('role-select')}
-            className="text-terracotta font-extrabold hover:underline"
+            className="text-terracotta font-extrabold hover:underline cursor-pointer"
           >
-            Register Student
+            {t('registerNow', 'Register now')}
           </button>
         </div>
       </div>

@@ -16,10 +16,12 @@ public class UpdateProfileRequest {
     @NotBlank(message = "Name is required")
     private String name;
 
-    @NotBlank(message = "Department is required")
+    private String faculty;
+
     private String department;
 
-    @NotNull(message = "Semester is required")
+    private String course;
+
     @Min(value = 1, message = "Semester must be at least 1")
     @Max(value = 10, message = "Semester cannot exceed 10")
     private Integer semester;

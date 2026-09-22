@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -19,21 +20,23 @@ public class User {
     @Id
     private String id;
 
+    @Indexed(unique = true)
+    private String keycloakUserId;
+
     private String name;
+
+    @Indexed(unique = true)
     private String email;
 
     @Field("enrollmentNumber")
+    @Indexed(unique = true)
     private String enrollmentNumber;
 
+    private String faculty;
     private String department;
+    private String course;
     private String year;
-<<<<<<< Updated upstream
-    private String semester;
-    private String profilePicture;
-=======
     private Integer semester;
->>>>>>> Stashed changes
-    private String password;
 
     private Role role;
     private boolean verified;
@@ -43,6 +46,8 @@ public class User {
 
     private String otp;
     private LocalDateTime otpExpiry;
+
+    private String passwordHash;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

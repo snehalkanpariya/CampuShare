@@ -11,14 +11,49 @@ import VerificationResult from './pages/VerificationResult';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import Listings from './pages/Listings';
+import HostelPickups from './pages/HostelPickups';
+import SafeExchange from './pages/SafeExchange';
 import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+import { parseJwtToken, getUserRolesFromToken } from './config/keycloak';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { INITIAL_CAMPUS_ITEMS } from './data/mockItems';
 
-export default function App() {
+function MainLayout() {
   const [currentView, setCurrentView] = useState('welcome');
   const [currentUser, setCurrentUser] = useState(null);
   const [verificationData, setVerificationData] = useState(null);
   const [resultData, setResultData] = useState(null);
-  const [lang, setLang] = useState('en');
+
+  // Shared listings store with persistent storage
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('campus_items');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      // Ignored
+    }
+    return INITIAL_CAMPUS_ITEMS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('campus_items', JSON.stringify(items));
+    } catch (e) {
+      // Ignored
+    }
+  }, [items]);
+
+  // Handle Admin rule-violation delete or student delete
+  const handleDeleteItem = (itemId, reason) => {
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+  };
+
+  // Handle new item listing
+  const handleAddItem = (newItem) => {
+    setItems((prev) => [newItem, ...prev]);
+  };
 
   // Load existing session from localStorage on startup
   useEffect(() => {
@@ -27,8 +62,14 @@ export default function App() {
     if (savedUser && savedToken) {
       try {
         const userObj = JSON.parse(savedUser);
-        setCurrentUser({ ...userObj, verified: true });
-        setCurrentView('dashboard');
+        const roles = getUserRolesFromToken(savedToken);
+        setCurrentUser({
+          ...userObj,
+          roles: roles,
+          role: roles.includes('ADMIN') ? 'ADMIN' : (userObj.role || 'STUDENT'),
+          verified: true
+        });
+        setCurrentView(roles.includes('ADMIN') ? 'admin-dashboard' : 'dashboard');
       } catch (e) {
         localStorage.clear();
       }
@@ -63,11 +104,36 @@ export default function App() {
         return <Login onNavigate={setCurrentView} setCurrentUser={setCurrentUser} />;
       case 'forgot-password':
         return <ForgotPassword onNavigate={setCurrentView} />;
+      case 'admin-dashboard':
+        return <AdminDashboard onNavigate={setCurrentView} onLogout={handleLogout} />;
       case 'dashboard':
+        return (
+          <Dashboard
+            currentUser={currentUser}
+            onNavigate={setCurrentView}
+            items={items}
+            onDeleteItem={handleDeleteItem}
+          />
+        );
       case 'listings':
+        return (
+          <Listings
+            currentUser={currentUser}
+            items={items}
+            onAddItem={handleAddItem}
+            onDeleteItem={handleDeleteItem}
+          />
+        );
       case 'hostel':
+        return (
+          <HostelPickups
+            currentUser={currentUser}
+            items={items}
+            onDeleteItem={handleDeleteItem}
+          />
+        );
       case 'exchange-map':
-        return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+        return <SafeExchange currentUser={currentUser} />;
       case 'profile':
         return <Profile currentUser={currentUser} />;
       default:
@@ -75,15 +141,13 @@ export default function App() {
     }
   };
 
-  const showSidebar = ['dashboard', 'listings', 'hostel', 'exchange-map', 'profile'].includes(currentView);
+  const showSidebar = ['dashboard', 'listings', 'hostel', 'exchange-map', 'profile', 'admin-dashboard'].includes(currentView);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-beige)' }}>
       <Navbar
         currentUser={currentUser}
         onNavigate={setCurrentView}
-        lang={lang}
-        setLang={setLang}
       />
 
       <div style={{ flex: 1, display: 'flex' }}>
@@ -101,5 +165,13 @@ export default function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainLayout />
+    </LanguageProvider>
   );
 }

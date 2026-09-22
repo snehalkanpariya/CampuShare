@@ -29,7 +29,7 @@ public class EmailService {
             log.info("OTP email successfully sent from {} to {}", fromEmail, toEmail);
         } catch (Exception e) {
             log.error("Failed to send OTP email to {}: {}", toEmail, e.getMessage());
-            // Log fallback for development testing
+           
             log.info("DEVELOPMENT OTP FOR {}: {}", toEmail, otp);
         }
     }

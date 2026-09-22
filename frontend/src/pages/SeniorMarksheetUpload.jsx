@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { verifyMarksheetApi } from '../config/api';
 import { UploadCloud, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function SeniorMarksheetUpload({ verificationData, onNavigate, setResultData }) {
+  const { t } = useLanguage();
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -61,7 +63,12 @@ export default function SeniorMarksheetUpload({ verificationData, onNavigate, se
           <ShieldCheck size={44} />
         </div>
 
-        <h2 className="text-2xl font-extrabold text-stone-800">Marksheet OCR Verification</h2>
+        <h2 className="text-2xl font-extrabold text-stone-800">
+          {t('marksheetUploadTitle', 'Marksheet OCR Verification')}
+        </h2>
+        <p className="text-xs text-stone-500 font-medium">
+          {t('marksheetUploadSubtitle', 'Zero-Storage AI Identity Verification')}
+        </p>
 
         {/* Profile Card Summary */}
         <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200 text-sm flex justify-between font-bold">
@@ -70,7 +77,7 @@ export default function SeniorMarksheetUpload({ verificationData, onNavigate, se
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3.5 rounded-xl text-xs font-bold text-left flex items-center gap-2">
+          <div className="bg-red-50 text-red-600 p-3.5 rounded-xl text-xs font-bold text-left flex items-center gap-2 animate-fade-in">
             <AlertCircle size={18} className="shrink-0" />
             <div>{error}</div>
           </div>
@@ -95,8 +102,13 @@ export default function SeniorMarksheetUpload({ verificationData, onNavigate, se
                 <div className="text-xs text-stone-500 mt-1">{(selectedFile.size / 1024).toFixed(1)} KB</div>
               </div>
             ) : (
-              <div className="text-sm font-bold text-stone-700">
-                Click or drag marksheet here to upload
+              <div>
+                <div className="text-sm font-bold text-stone-700">
+                  {t('dragDropMarksheet', 'Click or drag your official Gujarat Vidyapith Marksheet here')}
+                </div>
+                <div className="text-xs text-stone-400 mt-1 font-medium">
+                  {t('supportedFormats', 'Supported formats: PDF, JPG, PNG, BMP')}
+                </div>
               </div>
             )}
           </div>
@@ -104,11 +116,15 @@ export default function SeniorMarksheetUpload({ verificationData, onNavigate, se
           <button
             type="submit"
             disabled={loading || !selectedFile}
-            className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-3.5 rounded-full font-bold text-base shadow-lg shadow-terracotta/25 transition-all disabled:opacity-50"
+            className="w-full bg-terracotta hover:bg-terracotta-hover text-white py-3.5 rounded-full font-bold text-base shadow-lg shadow-terracotta/25 transition-all disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Scanning & Verifying...' : 'Run Marksheet OCR Verification'}
+            {loading ? t('processing', 'Processing...') : t('verifyMarksheetButton', 'Scan & Verify Marksheet via OCR')}
           </button>
         </form>
+
+        <p className="text-[11px] text-stone-400 font-medium">
+          {t('privacyNote', 'Zero-Storage Guarantee: Your marksheet is analyzed in-memory and immediately destroyed after verification.')}
+        </p>
       </div>
     </div>
   );

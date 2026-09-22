@@ -1,7 +1,16 @@
 const AUTH_URLS = ['http://localhost:8081/api/auth', 'http://localhost:8080/api/auth'];
+const ADMIN_URLS = ['http://localhost:8081/api/admin/authorized-students', 'http://localhost:8080/api/admin/authorized-students'];
 const USER_URLS = ['http://localhost:8081/api/users', 'http://localhost:8080/api/users'];
 const VERIFY_URLS = ['http://localhost:8082/api/verify', 'http://localhost:8080/api/verify'];
-const USER_URLS = ['http://localhost:8081/api/users', 'http://localhost:8080/api/users'];
+
+function getAuthHeaders(extraHeaders = {}) {
+  const token = localStorage.getItem('campus_token');
+  const headers = { ...extraHeaders };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 async function fetchWithFallback(urlList, path, options) {
   let lastError = null;
@@ -17,7 +26,6 @@ async function fetchWithFallback(urlList, path, options) {
       return resData;
     } catch (err) {
       if (err.message && !err.message.includes('Failed to fetch')) {
-        // High level server error response (e.g. 400 Bad Request, unverified account)
         throw err;
       }
       lastError = err;
@@ -66,6 +74,30 @@ export async function loginApi(data) {
   });
 }
 
+// ADMIN APIS
+export async function getAuthorizedStudentsApi(searchQuery = '') {
+  const queryParam = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
+  return fetchWithFallback(ADMIN_URLS, queryParam, {
+    method: 'GET',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+  });
+}
+
+export async function addAuthorizedStudentApi(data) {
+  return fetchWithFallback(ADMIN_URLS, '', {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function revokeAuthorizedStudentApi(id) {
+  return fetchWithFallback(ADMIN_URLS, `/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+  });
+}
+
 export async function getUserProfileApi(token) {
   return fetchWithFallback(USER_URLS, '/me', {
     method: 'GET',
@@ -76,8 +108,6 @@ export async function getUserProfileApi(token) {
   });
 }
 
-<<<<<<< Updated upstream
-=======
 export async function resetPasswordApi(data) {
   return fetchWithFallback(AUTH_URLS, '/reset-password', {
     method: 'POST',
@@ -94,43 +124,24 @@ export async function resetPasswordSeniorApi(formData) {
 }
 
 export async function changePasswordApi(data) {
-  const token = localStorage.getItem('campus_token');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   return fetchWithFallback(AUTH_URLS, '/change-password', {
     method: 'POST',
-    headers,
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
 }
 
 export async function getProfileApi() {
-  const token = localStorage.getItem('campus_token');
-  const headers = {};
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   return fetchWithFallback(USER_URLS, '/me', {
     method: 'GET',
-    headers,
+    headers: getAuthHeaders(),
   });
 }
 
 export async function updateProfileApi(data) {
-  const token = localStorage.getItem('campus_token');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   return fetchWithFallback(USER_URLS, '/me', {
     method: 'PUT',
-    headers,
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
 }
->>>>>>> Stashed changes

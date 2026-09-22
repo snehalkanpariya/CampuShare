@@ -10,4 +10,6 @@ public class OtpVerificationRequest {
 
     @NotBlank(message = "OTP is required")
     private String otp;
+
+    private String password;
 }

@@ -4,14 +4,27 @@ server:
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/campusshare
   cloud:
     gateway:
       mvc:
         routes:
-          - id: auth-service
+          - id: auth-service-admin
             uri: lb://AUTH-SERVICE
             predicates:
-              - Path=/api/auth/**, /api/test/**, /api/users/**
+              - Path=/api/admin/**
+          - id: auth-service-api
+            uri: lb://AUTH-SERVICE
+            predicates:
+              - Path=/api/auth/**
+          - id: auth-service-users
+            uri: lb://AUTH-SERVICE
+            predicates:
+              - Path=/api/users/**
           - id: verification-service
             uri: lb://VERIFICATION-SERVICE
             predicates:

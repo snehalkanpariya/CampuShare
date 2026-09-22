@@ -12,11 +12,16 @@ public class JuniorRegisterRequest {
     @NotBlank(message = "Enrollment number is required")
     private String enrollmentNumber;
 
+    private String faculty;
+
     @NotBlank(message = "Department is required")
     private String department;
 
-    @NotBlank(message = "Year is required")
+    private String course;
+
     private String year;
+
+    private Integer semester;
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters long")

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowLeft, KeyRound, Mail, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ForgotPassword({ onNavigate }) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -22,10 +24,11 @@ export default function ForgotPassword({ onNavigate }) {
           color: 'var(--text-muted)',
           fontWeight: 600,
           fontSize: '0.88rem',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          cursor: 'pointer'
         }}
       >
-        <ArrowLeft size={16} /> Back to Login
+        <ArrowLeft size={16} /> {t('backToLogin', 'Back to Login')}
       </button>
 
       <div style={{
@@ -50,10 +53,10 @@ export default function ForgotPassword({ onNavigate }) {
             <KeyRound size={26} />
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-terracotta)', marginBottom: '4px' }}>
-            Reset Password
+            {t('resetPasswordTitle', 'Reset Password')}
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Enter your official Gujarat Vidyapith email address to receive password reset OTP.
+            {t('resetPasswordDesc', 'Enter your official Gujarat Vidyapith email address to receive password reset OTP.')}
           </p>
         </div>
 
@@ -71,7 +74,7 @@ export default function ForgotPassword({ onNavigate }) {
               justifyContent: 'center',
               gap: '8px'
             }}>
-              <CheckCircle2 size={20} /> Password reset OTP link sent to {email}
+              <CheckCircle2 size={20} /> {email}
             </div>
 
             <button
@@ -82,16 +85,19 @@ export default function ForgotPassword({ onNavigate }) {
                 padding: '12px 24px',
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 700,
-                fontSize: '0.9rem'
+                fontSize: '0.9rem',
+                cursor: 'pointer'
               }}
             >
-              Return to Login
+              {t('backToLogin', 'Return to Login')}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>GVP Email</label>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                {t('identifierLabel', 'GVP Email')}
+              </label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
                 <input
@@ -120,10 +126,11 @@ export default function ForgotPassword({ onNavigate }) {
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 700,
                 fontSize: '0.95rem',
-                marginTop: '8px'
+                marginTop: '8px',
+                cursor: 'pointer'
               }}
             >
-              Send Password Reset OTP
+              {t('sendResetLink', 'Send Password Reset OTP')}
             </button>
           </form>
         )}

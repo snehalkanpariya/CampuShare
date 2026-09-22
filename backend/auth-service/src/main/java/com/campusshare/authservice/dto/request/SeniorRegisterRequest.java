@@ -12,8 +12,14 @@ public class SeniorRegisterRequest {
     @NotBlank(message = "Enrollment number is required")
     private String enrollmentNumber;
 
+    private String faculty;
+
     @NotBlank(message = "Department is required")
     private String department;
+
+    private String course;
+
+    private Integer semester;
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters long")
