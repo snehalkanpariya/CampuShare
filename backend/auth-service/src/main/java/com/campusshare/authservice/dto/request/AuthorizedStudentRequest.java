@@ -18,4 +18,11 @@ public class AuthorizedStudentRequest {
     private Role allowedRole;
 
     private AuthorizationStatus status = AuthorizationStatus.APPROVED;
+
+    private String name;
+    private String password;
+    private String department;
+    private String faculty;
+    private String course;
+    private Integer semester;
 }

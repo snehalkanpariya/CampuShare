@@ -8,8 +8,11 @@ import com.campusshare.authservice.repository.AuthorizedStudentRepository;
 import com.campusshare.authservice.repository.UserRepository;
 import com.campusshare.authservice.service.AdminStudentService;
 import com.campusshare.authservice.service.KeycloakAdminService;
+import com.campusshare.authservice.entity.VerificationMethod;
+import com.campusshare.authservice.entity.VerificationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -25,33 +28,96 @@ public class AdminStudentServiceImpl implements AdminStudentService {
     private final AuthorizedStudentRepository authorizedStudentRepository;
     private final UserRepository userRepository;
     private final KeycloakAdminService keycloakAdminService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AuthorizedStudent addAuthorizedStudent(AuthorizedStudentRequest request, Principal principal) {
         String trimmedEnrollment = request.getEnrollmentNumber().trim();
         String trimmedEmail = request.getEmail().trim().toLowerCase();
-
-        if (authorizedStudentRepository.existsByEnrollmentNumber(trimmedEnrollment)) {
-            throw new RuntimeException("Student with enrollment number " + trimmedEnrollment + " is already in authorization list.");
-        }
-        if (authorizedStudentRepository.existsByEmail(trimmedEmail)) {
-            throw new RuntimeException("Student with email " + trimmedEmail + " is already in authorization list.");
-        }
-
         String adminName = (principal != null) ? principal.getName() : "ADMIN";
 
-        AuthorizedStudent student = AuthorizedStudent.builder()
-                .enrollmentNumber(trimmedEnrollment)
-                .email(trimmedEmail)
-                .allowedRole(request.getAllowedRole())
-                .status(request.getStatus() != null ? request.getStatus() : AuthorizationStatus.APPROVED)
-                .authorizedBy(adminName)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        AuthorizedStudent student = authorizedStudentRepository.findByEnrollmentNumberIgnoreCase(trimmedEnrollment)
+                .or(() -> authorizedStudentRepository.findByEmailIgnoreCase(trimmedEmail))
+                .orElse(null);
 
-        log.info("Admin '{}' authorized student: enrollment={}, email={}, role={}", adminName, trimmedEnrollment, trimmedEmail, request.getAllowedRole());
-        return authorizedStudentRepository.save(student);
+        if (student != null) {
+            student.setEnrollmentNumber(trimmedEnrollment);
+            student.setEmail(trimmedEmail);
+            student.setAllowedRole(request.getAllowedRole());
+            student.setStatus(request.getStatus() != null ? request.getStatus() : AuthorizationStatus.APPROVED);
+            student.setAuthorizedBy(adminName);
+            student.setUpdatedAt(LocalDateTime.now());
+        } else {
+            student = AuthorizedStudent.builder()
+                    .enrollmentNumber(trimmedEnrollment)
+                    .email(trimmedEmail)
+                    .allowedRole(request.getAllowedRole())
+                    .status(request.getStatus() != null ? request.getStatus() : AuthorizationStatus.APPROVED)
+                    .authorizedBy(adminName)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+        }
+
+        AuthorizedStudent saved = authorizedStudentRepository.save(student);
+
+        // Immediately provision verified User account so the student can sign in immediately
+        String studentName = (request.getName() != null && !request.getName().isBlank())
+                ? request.getName().trim()
+                : "Student " + trimmedEnrollment;
+        String initialPassword = (request.getPassword() != null && !request.getPassword().isBlank())
+                ? request.getPassword().trim()
+                : trimmedEnrollment;
+
+        User user = userRepository.findByEnrollmentNumber(trimmedEnrollment)
+                .or(() -> userRepository.findByEnrollmentNumberIgnoreCase(trimmedEnrollment))
+                .or(() -> userRepository.findByEmail(trimmedEmail))
+                .or(() -> userRepository.findByEmailIgnoreCase(trimmedEmail))
+                .orElse(null);
+
+        if (user == null) {
+            user = new User();
+            user.setEnrollmentNumber(trimmedEnrollment);
+            user.setEmail(trimmedEmail);
+            user.setCreatedAt(LocalDateTime.now());
+        }
+
+        user.setName(studentName);
+        user.setRole(request.getAllowedRole());
+        user.setVerified(true);
+        user.setVerificationStatus(VerificationStatus.VERIFIED);
+        user.setVerificationMethod(VerificationMethod.ADMIN_AUTHORIZED);
+        user.setPasswordHash(passwordEncoder.encode(initialPassword));
+        user.setVerifiedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        if (request.getDepartment() != null && !request.getDepartment().isBlank()) user.setDepartment(request.getDepartment());
+        if (request.getFaculty() != null && !request.getFaculty().isBlank()) user.setFaculty(request.getFaculty());
+        if (request.getCourse() != null && !request.getCourse().isBlank()) user.setCourse(request.getCourse());
+        if (request.getSemester() != null) user.setSemester(request.getSemester());
+
+        try {
+            String kcId = keycloakAdminService.createKeycloakUser(
+                    trimmedEnrollment,
+                    trimmedEmail,
+                    studentName,
+                    initialPassword,
+                    request.getAllowedRole().name()
+            );
+            if (kcId != null) {
+                user.setKeycloakUserId(kcId);
+            }
+        } catch (Exception e) {
+            log.warn("Keycloak creation skipped for student '{}' (will use local MongoDB account): {}", trimmedEnrollment, e.getMessage());
+            if (user.getKeycloakUserId() == null) {
+                user.setKeycloakUserId("local-kc-" + trimmedEnrollment);
+            }
+        }
+
+        userRepository.save(user);
+        log.info("Admin '{}' authorized and provisioned student: enrollment={}, email={}, role={}",
+                adminName, trimmedEnrollment, trimmedEmail, request.getAllowedRole());
+
+        return saved;
     }
 
     @Override

@@ -22,6 +22,11 @@ public class LoginResponse {
         private String id;
         private String name;
         private String email;
+        private String enrollmentNumber;
+        private String department;
+        private String faculty;
+        private String course;
+        private Integer semester;
         private Role role;
     }
 }

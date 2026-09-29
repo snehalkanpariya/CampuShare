@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElse(null);
 
         if (existingUser != null && existingUser.isVerified()) {
-            throw new RuntimeException("Verified user with enrollment number " + request.getEnrollmentNumber() + " already exists. Please log in via Keycloak.");
+            throw new RuntimeException("Verified user with enrollment number " + request.getEnrollmentNumber() + " already exists. Please sign in directly with your enrollment number and ID/password.");
         }
 
         String generatedOtp = String.format("%06d", new SecureRandom().nextInt(1000000));
@@ -130,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElse(null);
 
         if (existingUser != null && existingUser.isVerified()) {
-            throw new RuntimeException("Verified user with enrollment number " + request.getEnrollmentNumber() + " already exists. Please log in via Keycloak.");
+            throw new RuntimeException("Verified user with enrollment number " + request.getEnrollmentNumber() + " already exists. Please sign in directly with your enrollment number and ID/password.");
         }
 
         User user = (existingUser != null) ? existingUser : new User();
@@ -241,7 +241,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
         String input = (request.getEmail() != null) ? request.getEmail().trim() : "";
-        String password = request.getPassword();
+        String password = (request.getPassword() != null) ? request.getPassword() : "";
 
         log.info("Processing login authentication for input: {}", input);
 
@@ -273,22 +273,94 @@ public class AuthServiceImpl implements AuthService {
                             .id(adminUser.getId())
                             .name(adminUser.getName())
                             .email(adminUser.getEmail())
+                            .enrollmentNumber(adminUser.getEnrollmentNumber())
                             .role(Role.ADMIN)
                             .build())
                     .build();
         }
 
         // 2. Student login handling
+        // 2.1 First search in userRepository
         User user = userRepository.findByEmail(input)
                 .or(() -> userRepository.findByEmailIgnoreCase(input))
                 .or(() -> userRepository.findByEnrollmentNumber(input))
                 .or(() -> userRepository.findByEnrollmentNumberIgnoreCase(input))
-                .orElseThrow(() -> new RuntimeException("User not found with enrollment number / email: " + input));
+                .orElse(null);
 
-        if (!user.isVerified()) {
-            throw new RuntimeException("Student account is not verified yet. Please complete verification.");
+        // 2.2 If not found in userRepository, check if student is authorized in Admin list
+        AuthorizedStudent authorized = authorizedStudentRepository.findByEnrollmentNumberIgnoreCase(input)
+                .or(() -> authorizedStudentRepository.findByEmailIgnoreCase(input))
+                .orElse(null);
+
+        if (authorized != null && authorized.getStatus() == AuthorizationStatus.REVOKED) {
+            throw new RuntimeException("Student authorization has been revoked by campus administration.");
         }
 
+        // Auto-provision student account if pre-authorized by admin
+        if (user == null && authorized != null) {
+            log.info("Student '{}' found in Admin Authorization List. Auto-provisioning verified student account.", authorized.getEnrollmentNumber());
+            String initialPassword = (!password.isBlank()) ? password : authorized.getEnrollmentNumber();
+            String studentName = "Student " + authorized.getEnrollmentNumber();
+
+            String keycloakUserId = null;
+            try {
+                keycloakUserId = keycloakAdminService.createKeycloakUser(
+                        authorized.getEnrollmentNumber(),
+                        authorized.getEmail(),
+                        studentName,
+                        initialPassword,
+                        authorized.getAllowedRole() != null ? authorized.getAllowedRole().name() : "JUNIOR"
+                );
+            } catch (Exception e) {
+                log.warn("Keycloak creation skipped during student auto-provisioning: {}", e.getMessage());
+            }
+
+            user = User.builder()
+                    .name(studentName)
+                    .enrollmentNumber(authorized.getEnrollmentNumber())
+                    .email(authorized.getEmail())
+                    .role(authorized.getAllowedRole() != null ? authorized.getAllowedRole() : Role.JUNIOR)
+                    .verified(true)
+                    .verificationStatus(VerificationStatus.VERIFIED)
+                    .verificationMethod(VerificationMethod.ADMIN_AUTHORIZED)
+                    .passwordHash(passwordEncoder.encode(initialPassword))
+                    .keycloakUserId(keycloakUserId != null ? keycloakUserId : "local-kc-" + authorized.getEnrollmentNumber())
+                    .verifiedAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            user = userRepository.save(user);
+
+            authorized.setStatus(AuthorizationStatus.USED);
+            authorized.setUpdatedAt(LocalDateTime.now());
+            authorizedStudentRepository.save(authorized);
+        }
+
+        if (user == null) {
+            throw new RuntimeException("User not found with enrollment number / email: " + input);
+        }
+
+        // 2.3 Verify if account is verified (auto-verify if present in Admin Authorization List)
+        if (!user.isVerified()) {
+            if (authorized != null && authorized.getStatus() != AuthorizationStatus.REVOKED) {
+                user.setVerified(true);
+                user.setVerificationStatus(VerificationStatus.VERIFIED);
+                user.setVerificationMethod(VerificationMethod.ADMIN_AUTHORIZED);
+                user.setVerifiedAt(LocalDateTime.now());
+                user.setUpdatedAt(LocalDateTime.now());
+                userRepository.save(user);
+
+                authorized.setStatus(AuthorizationStatus.USED);
+                authorized.setUpdatedAt(LocalDateTime.now());
+                authorizedStudentRepository.save(authorized);
+                log.info("Auto-verified unverified student account based on Admin Authorization: {}", user.getEnrollmentNumber());
+            } else {
+                throw new RuntimeException("Student account is not verified yet. Please complete verification.");
+            }
+        }
+
+        // 2.4 Authenticate password (Keycloak or Local)
         String token = null;
         try {
             token = keycloakAdminService.authenticateUser(user.getEnrollmentNumber(), password);
@@ -300,12 +372,33 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (token == null) {
-            if (user.getPasswordHash() != null && !user.getPasswordHash().isBlank()) {
-                if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-                    throw new RuntimeException("Invalid password for student account.");
+            // Local authentication checks:
+            // 1. Password matches hashed password in DB
+            // 2. Password matches student's enrollment number
+            // 3. Password matches student's institutional email or ID
+            // 4. Student account has no password hash set yet
+            boolean matchesPasswordHash = user.getPasswordHash() != null && passwordEncoder.matches(password, user.getPasswordHash());
+            boolean matchesEnrollment = user.getEnrollmentNumber() != null && user.getEnrollmentNumber().equalsIgnoreCase(password);
+            boolean matchesEmail = user.getEmail() != null && user.getEmail().equalsIgnoreCase(password);
+            boolean noPasswordSet = user.getPasswordHash() == null || user.getPasswordHash().isBlank();
+
+            if (matchesPasswordHash || matchesEnrollment || matchesEmail || noPasswordSet) {
+                if (!matchesPasswordHash && !password.isBlank()) {
+                    user.setPasswordHash(passwordEncoder.encode(password));
+                    user.setUpdatedAt(LocalDateTime.now());
+                    userRepository.save(user);
                 }
+                token = "session-token-" + user.getId() + "-" + System.currentTimeMillis();
+            } else {
+                throw new RuntimeException("Invalid password for student account.");
             }
-            token = "session-token-" + user.getId() + "-" + System.currentTimeMillis();
+        }
+
+        // Mark authorization as USED if not already marked
+        if (authorized != null && authorized.getStatus() != AuthorizationStatus.USED && authorized.getStatus() != AuthorizationStatus.REVOKED) {
+            authorized.setStatus(AuthorizationStatus.USED);
+            authorized.setUpdatedAt(LocalDateTime.now());
+            authorizedStudentRepository.save(authorized);
         }
 
         return LoginResponse.builder()
@@ -314,6 +407,11 @@ public class AuthServiceImpl implements AuthService {
                         .id(user.getId())
                         .name(user.getName())
                         .email(user.getEmail())
+                        .enrollmentNumber(user.getEnrollmentNumber())
+                        .department(user.getDepartment())
+                        .faculty(user.getFaculty())
+                        .course(user.getCourse())
+                        .semester(user.getSemester())
                         .role(user.getRole())
                         .build())
                 .build();

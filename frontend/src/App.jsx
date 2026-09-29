@@ -63,13 +63,15 @@ function MainLayout() {
       try {
         const userObj = JSON.parse(savedUser);
         const roles = getUserRolesFromToken(savedToken);
+        const isAdmin = roles.includes('ADMIN') || userObj.role === 'ADMIN' || (userObj.roles && userObj.roles.includes('ADMIN'));
+        const userRoles = roles.length > 0 ? roles : (userObj.roles || (isAdmin ? ['ADMIN'] : [userObj.role || 'STUDENT']));
         setCurrentUser({
           ...userObj,
-          roles: roles,
-          role: roles.includes('ADMIN') ? 'ADMIN' : (userObj.role || 'STUDENT'),
+          roles: userRoles,
+          role: isAdmin ? 'ADMIN' : (userObj.role || 'STUDENT'),
           verified: true
         });
-        setCurrentView(roles.includes('ADMIN') ? 'admin-dashboard' : 'dashboard');
+        setCurrentView(isAdmin ? 'admin-dashboard' : 'dashboard');
       } catch (e) {
         localStorage.clear();
       }
@@ -135,7 +137,7 @@ function MainLayout() {
       case 'exchange-map':
         return <SafeExchange currentUser={currentUser} />;
       case 'profile':
-        return <Profile currentUser={currentUser} />;
+        return <Profile currentUser={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />;
       default:
         return <Welcome onNavigate={setCurrentView} />;
     }
@@ -148,6 +150,7 @@ function MainLayout() {
       <Navbar
         currentUser={currentUser}
         onNavigate={setCurrentView}
+        onLogout={handleLogout}
       />
 
       <div style={{ flex: 1, display: 'flex' }}>

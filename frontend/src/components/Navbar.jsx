@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Search, Bell, Globe } from 'lucide-react';
+import { Search, Bell, Globe, LogOut, ShieldAlert } from 'lucide-react';
 import CharkhaLogo from './CharkhaLogo';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function Navbar({ currentUser, onNavigate }) {
+export default function Navbar({ currentUser, onNavigate, onLogout }) {
   const { lang, setLang, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isAdmin = currentUser && (currentUser.role === 'ADMIN' || (currentUser.roles && currentUser.roles.includes('ADMIN')));
 
   return (
     <header className="bg-terracotta text-white px-6 py-3 flex items-center justify-between shadow-md sticky top-0 z-50">
       {/* Brand Header */}
       <div 
-        onClick={() => currentUser ? onNavigate('dashboard') : onNavigate('welcome')}
+        onClick={() => currentUser ? onNavigate(isAdmin ? 'admin-dashboard' : 'dashboard') : onNavigate('welcome')}
         className="flex items-center gap-3 cursor-pointer group"
       >
         <CharkhaLogo size={42} />
@@ -54,6 +56,18 @@ export default function Navbar({ currentUser, onNavigate }) {
           <span>{lang === 'en' ? 'ગુજરાતી' : 'English'}</span>
         </button>
 
+        {/* Admin Portal Quick Switch */}
+        {isAdmin && (
+          <button
+            onClick={() => onNavigate('admin-dashboard')}
+            title="Admin Authorization Portal"
+            className="flex items-center gap-1.5 bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 px-3 py-1.5 rounded-full text-xs font-bold border border-amber-400/30 transition-all cursor-pointer shadow-sm"
+          >
+            <ShieldAlert size={14} className="text-amber-300" />
+            <span className="hidden md:inline">Admin Portal</span>
+          </button>
+        )}
+
         {/* Notifications - ONLY SHOWN WHEN USER IS LOGGED IN */}
         {currentUser && (
           <button 
@@ -66,17 +80,29 @@ export default function Navbar({ currentUser, onNavigate }) {
         )}
 
         {currentUser ? (
-          <div 
-            onClick={() => onNavigate('profile')}
-            className="flex items-center gap-2.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full cursor-pointer transition-all border border-white/20"
-          >
-            <div className="w-7 h-7 rounded-full bg-white text-terracotta flex items-center justify-center font-bold text-xs">
-              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+          <>
+            <div 
+              onClick={() => onNavigate('profile')}
+              className="flex items-center gap-2.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full cursor-pointer transition-all border border-white/20"
+            >
+              <div className="w-7 h-7 rounded-full bg-white text-terracotta flex items-center justify-center font-bold text-xs">
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <span className="text-xs font-bold">
+                {currentUser.name ? currentUser.name.split(' ')[0] : (isAdmin ? 'Admin' : 'Student')}
+              </span>
             </div>
-            <span className="text-xs font-bold">
-              {currentUser.name ? currentUser.name.split(' ')[0] : (currentUser.role === 'ADMIN' ? 'Admin' : 'Student')}
-            </span>
-          </div>
+
+            <button
+              id="navbar-logout-btn"
+              onClick={onLogout}
+              title={t('logout', 'Logout')}
+              className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all border border-rose-400/50 cursor-pointer"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">{t('logout', 'Logout')}</span>
+            </button>
+          </>
         ) : (
           <button
             onClick={() => onNavigate('login')}

@@ -19,6 +19,8 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
   const [formData, setFormData] = useState({
     enrollmentNumber: '',
     email: '',
+    name: '',
+    password: '',
     allowedRole: 'JUNIOR',
     status: 'APPROVED'
   });
@@ -52,10 +54,13 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
 
     try {
       await addAuthorizedStudentApi(formData);
-      setSuccess(`Student ${formData.enrollmentNumber} successfully authorized!`);
+      const initialPass = formData.password ? formData.password : formData.enrollmentNumber;
+      setSuccess(`Student ${formData.enrollmentNumber} successfully authorized! The student can now sign in immediately using Enrollment Number "${formData.enrollmentNumber}" and Password "${initialPass}".`);
       setFormData({
         enrollmentNumber: '',
         email: '',
+        name: '',
+        password: '',
         allowedRole: 'JUNIOR',
         status: 'APPROVED'
       });
@@ -126,10 +131,12 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
           </button>
 
           <button
+            id="admin-logout-btn"
             onClick={onLogout}
-            className="bg-red-600/90 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-red-500/50 shadow-md transition-all cursor-pointer"
+            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 border border-rose-500 shadow-md transition-all cursor-pointer"
+            title="Log out from Admin session"
           >
-            <LogOut size={15} /> {t('logout', 'Logout')}
+            <LogOut size={16} /> {t('logout', 'Logout')}
           </button>
         </div>
       </div>
@@ -141,8 +148,9 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
         </div>
       )}
       {success && (
-        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl text-sm font-semibold border border-emerald-200 flex items-center gap-2">
-          <CheckCircle size={18} /> {success}
+        <div className="bg-emerald-50 text-emerald-800 p-4 rounded-2xl text-sm font-semibold border border-emerald-300 flex items-center gap-2">
+          <CheckCircle size={18} className="shrink-0 text-emerald-600" />
+          <span>{success}</span>
         </div>
       )}
 
@@ -168,13 +176,24 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
 
       {/* Add Student Form */}
       <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-stone-800 flex items-center gap-2">
-          <UserPlus size={20} className="text-amber-600" /> {t('addStudent', 'Authorize New Student Registration')}
-        </h2>
-        <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-stone-800 flex items-center gap-2">
+            <UserPlus size={20} className="text-amber-600" /> {t('addStudent', 'Authorize New Student Registration')}
+          </h2>
+          <span className="text-xs text-stone-500 font-medium">Pre-approves student & provisions instant sign-in</span>
+        </div>
+
+        <div className="bg-amber-50/80 border border-amber-200/80 text-amber-900 px-4 py-2.5 rounded-2xl text-xs flex items-center gap-2">
+          <ShieldCheck size={18} className="text-amber-600 shrink-0" />
+          <span>
+            <strong>Direct Sign-In Enabled:</strong> Authorized students can immediately sign in with their <strong>Enrollment Number</strong> and password (default: their Enrollment Number).
+          </span>
+        </div>
+
+        <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase text-stone-600 mb-1">
-              {t('enrollmentNumber', 'Enrollment Number')}
+              {t('enrollmentNumber', 'Enrollment Number')} *
             </label>
             <input
               type="text"
@@ -189,13 +208,13 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
                   email: enr ? `${enr.toLowerCase()}.gvp@gujaratvidyapith.org` : ''
                 });
               }}
-              className="w-full px-3.5 py-2 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500 font-mono uppercase"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500 font-mono uppercase"
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase text-stone-600 mb-1">
-              {t('identifierLabel', 'Institutional Email')}
+              {t('identifierLabel', 'Institutional Email')} *
             </label>
             <input
               type="email"
@@ -203,21 +222,47 @@ export default function AdminDashboard({ onNavigate, onLogout }) {
               placeholder="250160450049.gvp@gujaratvidyapith.org"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500"
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase text-stone-600 mb-1">
-              {t('allowedRole', 'Allowed Role')}
+              Student Full Name (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Snehal Kanpariya"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase text-stone-600 mb-1">
+              Initial Password (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="Default: Enrollment Number"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase text-stone-600 mb-1">
+              {t('allowedRole', 'Allowed Role')} *
             </label>
             <select
               value={formData.allowedRole}
               onChange={(e) => setFormData({ ...formData, allowedRole: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500 bg-white"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 outline-none text-sm font-medium focus:border-amber-500 bg-white"
             >
-              <option value="JUNIOR">JUNIOR (OTP Verification)</option>
-              <option value="SENIOR">SENIOR (OCR Verification)</option>
+              <option value="JUNIOR">JUNIOR (Semester 1)</option>
+              <option value="SENIOR">SENIOR (Semester 2+)</option>
             </select>
           </div>
 

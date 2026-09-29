@@ -24,12 +24,14 @@ export default function Login({ onNavigate, setCurrentUser }) {
       localStorage.setItem('campus_token', result.token);
       localStorage.setItem('campus_user', JSON.stringify(result.user));
 
+      const isAdmin = result.user.role === 'ADMIN' || (result.user.roles && result.user.roles.includes('ADMIN'));
       setCurrentUser({
         ...result.user,
+        roles: result.user.roles || (isAdmin ? ['ADMIN'] : [result.user.role]),
         verified: true
       });
 
-      onNavigate(result.user.role === 'ADMIN' ? 'admin-dashboard' : 'dashboard');
+      onNavigate(isAdmin ? 'admin-dashboard' : 'dashboard');
     } catch (err) {
       setError(err.message || 'Login failed. Invalid credentials or unverified account.');
     } finally {
@@ -110,6 +112,10 @@ export default function Login({ onNavigate, setCurrentUser }) {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 focus:border-terracotta outline-none text-sm font-medium"
               />
             </div>
+          </div>
+
+          <div className="bg-amber-50/80 border border-amber-200/70 p-2.5 rounded-xl text-[11px] text-amber-900 leading-snug">
+            💡 <strong>Authorized by Admin?</strong> Sign in with your <strong>Enrollment Number</strong> and password (default is your Enrollment Number).
           </div>
 
           <button
