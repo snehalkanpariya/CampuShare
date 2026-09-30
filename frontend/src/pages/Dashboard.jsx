@@ -115,12 +115,20 @@ export default function Dashboard({ currentUser, onNavigate }) {
           <span className="ml-2 text-xs font-semibold text-stone-400">({filteredItems.length} available)</span>
         </h3>
         
-        <button
-          onClick={() => onNavigate('listings')}
-          className="px-4 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition-all border border-stone-200"
-        >
-          View My Shared Items
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onNavigate('requests')}
+            className="px-4 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition-all border border-amber-200 flex items-center gap-1.5 shadow-sm"
+          >
+            <span>🤝 Requests & Exchanges</span>
+          </button>
+          <button
+            onClick={() => onNavigate('listings')}
+            className="px-4 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition-all border border-stone-200"
+          >
+            View My Shared Items
+          </button>
+        </div>
       </div>
 
       {/* Items Grid */}
@@ -229,6 +237,7 @@ export default function Dashboard({ currentUser, onNavigate }) {
         isOpen={!!viewingItem}
         onClose={() => setViewingItem(null)}
         currentUser={currentUser}
+        onNavigate={onNavigate}
         onEdit={(item) => {
           setEditingItem(item);
           setIsAddModalOpen(true);
