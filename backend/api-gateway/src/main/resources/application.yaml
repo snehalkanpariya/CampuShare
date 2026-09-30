@@ -11,7 +11,11 @@ spring:
           - id: auth-service
             uri: lb://AUTH-SERVICE
             predicates:
-              - Path=/api/auth/**, /api/test/**
+              - Path=/api/auth/**
+          - id: auth-test
+            uri: lb://AUTH-SERVICE
+            predicates:
+              - Path=/api/test/**
           - id: verification-service
             uri: lb://VERIFICATION-SERVICE
             predicates:
@@ -20,6 +24,14 @@ spring:
             uri: lb://ITEM-SERVICE
             predicates:
               - Path=/api/items/**
+          - id: request-service
+            uri: lb://ITEM-SERVICE
+            predicates:
+              - Path=/api/requests/**
+          - id: notification-service
+            uri: lb://ITEM-SERVICE
+            predicates:
+              - Path=/api/notifications/**
 
 eureka:
   client:

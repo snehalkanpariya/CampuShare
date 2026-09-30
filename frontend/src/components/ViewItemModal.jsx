@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { X, MapPin, ShieldCheck, Edit3, Trash2, Tag, Calendar, User, CheckCircle2, Clock, AlertTriangle, Shield, Check } from 'lucide-react';
+import { X, MapPin, ShieldCheck, Edit3, Trash2, Tag, Calendar, User, CheckCircle2, Clock, AlertTriangle, Shield, Check, Send, CheckCircle } from 'lucide-react';
+import RequestItemModal from './RequestItemModal';
+import { findRequestForItem } from '../utils/requestStorage';
 
-export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEdit, onDelete }) {
+export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEdit, onDelete, onNavigate }) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   if (!isOpen || !item) return null;
 
@@ -207,23 +210,99 @@ export default function ViewItemModal({ item, isOpen, onClose, currentUser, onEd
                   </button>
                 </div>
               </div>
-            ) : (
-              <button
-                onClick={() => {
-                  alert(`Safe Exchange Request sent to ${item.ownerName || 'sharer'}!\n\nMeet at: ${item.location || 'Central Library Gate'}.\nAll exchanges are protected by verified campus identity.`);
-                  onClose();
-                }}
-                className="w-full py-3 rounded-xl font-bold text-xs text-white bg-terracotta hover:bg-terracotta-hover shadow-lg flex items-center justify-center gap-2 transition-all"
-              >
-                <CheckCircle2 size={18} />
-                <span>Contact Sharer & Safe Exchange Request</span>
-              </button>
-            )}
+            ) : (() => {
+              const existingRequest = findRequestForItem(item.id, currentUser);
+
+              if (existingRequest && existingRequest.status === 'PENDING') {
+                return (
+                  <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-amber-800 font-extrabold text-xs">
+                      <Clock size={16} className="text-amber-600 animate-pulse" />
+                      <span>Request Sent • Pending Owner Review</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 font-medium">
+                      You requested this item on {new Date(existingRequest.createdAt).toLocaleDateString()}. Waiting for {item.ownerName || 'owner'} to Accept or Reject.
+                    </p>
+                    {onNavigate && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onNavigate('requests');
+                        }}
+                        className="text-xs font-bold text-amber-900 underline hover:text-amber-950 mt-1 inline-block"
+                      >
+                        Track in My Requests →
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              if (existingRequest && existingRequest.status === 'ACCEPTED') {
+                return (
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-emerald-800 font-extrabold text-xs">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                      <span>Request Accepted! Ready for Handover</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 font-medium">
+                      Meeting spot: <strong>{existingRequest.pickupLocation}</strong>.
+                    </p>
+                    {onNavigate && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onNavigate('requests');
+                        }}
+                        className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md transition-all inline-block"
+                      >
+                        Coordinate Pickup & Chat →
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              if (existingRequest && existingRequest.status === 'COMPLETED') {
+                return (
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center text-xs font-bold text-blue-800 flex items-center justify-center gap-2">
+                    <CheckCircle2 size={16} className="text-blue-600" />
+                    <span>Exchange Completed for this Item</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setIsRequestModalOpen(true)}
+                    className="w-full py-3.5 rounded-2xl font-bold text-xs text-white bg-terracotta hover:bg-terracotta-hover shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+                  >
+                    <Send size={16} />
+                    <span>Request This Item 🤝</span>
+                  </button>
+                  <p className="text-center text-[10px] text-stone-400 font-medium">
+                    Owner will be notified immediately to Accept or Decline
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
         </div>
 
       </div>
+
+      {/* Request Item Modal */}
+      <RequestItemModal
+        item={item}
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        currentUser={currentUser}
+        onRequestSuccess={() => {
+          setIsRequestModalOpen(false);
+        }}
+      />
     </div>
   );
 }

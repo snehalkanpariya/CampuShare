@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import MyListings from './pages/MyListings';
 import Profile from './pages/Profile';
 import SafeExchange from './pages/SafeExchange';
+import RequestsExchanges from './pages/RequestsExchanges';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('welcome');
@@ -67,6 +68,8 @@ export default function App() {
         return <ForgotPassword onNavigate={setCurrentView} />;
       case 'dashboard':
         return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+      case 'requests':
+        return <RequestsExchanges currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'listings':
         return <MyListings currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'hostel':
@@ -79,7 +82,7 @@ export default function App() {
     }
   };
 
-  const showSidebar = ['dashboard', 'listings', 'hostel', 'exchange-map', 'profile'].includes(currentView);
+  const showSidebar = ['dashboard', 'requests', 'listings', 'hostel', 'exchange-map', 'profile'].includes(currentView);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-beige)' }}>
