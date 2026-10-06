@@ -11,6 +11,7 @@ import VerificationResult from './pages/VerificationResult';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import Browse from './pages/Browse';
 import Listings from './pages/Listings';
 import HostelPickups from './pages/HostelPickups';
 import SafeExchange from './pages/SafeExchange';
@@ -117,6 +118,13 @@ function MainLayout() {
             onDeleteItem={handleDeleteItem}
           />
         );
+      case 'browse':
+        return (
+          <Browse
+            currentUser={currentUser}
+            onNavigate={setCurrentView}
+          />
+        );
       case 'listings':
         return (
           <Listings
@@ -124,6 +132,7 @@ function MainLayout() {
             items={items}
             onAddItem={handleAddItem}
             onDeleteItem={handleDeleteItem}
+            onNavigate={setCurrentView}
           />
         );
       case 'hostel':
@@ -143,7 +152,7 @@ function MainLayout() {
     }
   };
 
-  const showSidebar = ['dashboard', 'listings', 'hostel', 'exchange-map', 'profile', 'admin-dashboard'].includes(currentView);
+  const showSidebar = ['dashboard', 'browse', 'listings', 'hostel', 'exchange-map', 'profile', 'admin-dashboard'].includes(currentView);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-beige)' }}>

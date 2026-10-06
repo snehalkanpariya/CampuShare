@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, Sparkles, ShieldAlert } from 'lucide-react';
+import { Home, Compass, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, Sparkles, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Sidebar({ currentView, onNavigate, currentUser, onLogout }) {
@@ -8,6 +8,7 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
 
   const menuItems = [
     { id: 'dashboard', label: t('marketplace', 'Marketplace'), icon: Home },
+    { id: 'browse', label: t('browseResources', 'Browse Resources'), icon: Compass },
     { id: 'profile', label: t('profile', 'Profile'), icon: User },
     { id: 'listings', label: t('listings', 'Campus Listings'), icon: Package },
     { id: 'hostel', label: t('hostelPickups', 'Hostel Pickups'), icon: BookOpen },

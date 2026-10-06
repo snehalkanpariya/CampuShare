@@ -69,10 +69,10 @@ export default function Dashboard({ currentUser, onNavigate, items, onDeleteItem
             <p className="text-xs text-stone-500 mt-1">Over 85 incoming students awaiting handovers this week.</p>
           </div>
           <button
-            onClick={() => onNavigate('listings')}
-            className="text-xs font-bold text-terracotta hover:underline flex items-center gap-1 mt-3"
+            onClick={() => onNavigate('browse')}
+            className="text-xs font-bold text-terracotta hover:underline flex items-center gap-1 mt-3 cursor-pointer"
           >
-            View All Listings <ArrowRight size={14} />
+            Browse All Resources <ArrowRight size={14} />
           </button>
         </div>
       </div>
