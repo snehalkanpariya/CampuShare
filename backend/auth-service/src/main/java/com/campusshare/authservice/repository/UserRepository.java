@@ -12,4 +12,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEnrollmentNumber(String enrollmentNumber);
     Optional<User> findByEnrollmentNumberIgnoreCase(String enrollmentNumber);
     boolean existsByEnrollmentNumber(String enrollmentNumber);
+    Optional<User> findByKeycloakUserId(String keycloakUserId);
 }
