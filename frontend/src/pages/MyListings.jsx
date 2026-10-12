@@ -200,6 +200,7 @@ export default function MyListings({ currentUser, onNavigate }) {
         isOpen={!!viewingItem}
         onClose={() => setViewingItem(null)}
         currentUser={currentUser}
+        onNavigate={onNavigate}
         onEdit={(item) => {
           setEditingItem(item);
           setIsAddModalOpen(true);

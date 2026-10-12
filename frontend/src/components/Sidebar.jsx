@@ -1,13 +1,28 @@
-import React from 'react';
-import { Home, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, Sparkles, ArrowLeftRight } from 'lucide-react';
+import { getRequestsForOwner } from '../utils/requestStorage';
 
 export default function Sidebar({ currentView, onNavigate, currentUser, onLogout }) {
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  useEffect(() => {
+    const updateCount = () => {
+      const received = getRequestsForOwner(currentUser);
+      const pending = received.filter(r => r.status === 'PENDING').length;
+      setPendingRequestsCount(pending);
+    };
+
+    updateCount();
+    const interval = setInterval(updateCount, 4000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const menuItems = [
     { id: 'dashboard', label: 'Marketplace', icon: Home },
+    { id: 'requests', label: 'Requests & Exchanges', icon: ArrowLeftRight, badge: pendingRequestsCount },
+    { id: 'listings', label: 'My Listings', icon: Package },
+    { id: 'hostel', label: 'Safe Exchange Zones', icon: MapPin },
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'listings', label: 'Listings', icon: Package },
-    { id: 'hostel', label: 'Hostel Pickups', icon: BookOpen },
-    { id: 'exchange-map', label: 'Safe Exchange', icon: MapPin },
   ];
 
   return (
@@ -40,14 +55,21 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm w-full text-left font-semibold ${
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-sm w-full text-left font-semibold ${
                   isActive 
                     ? 'bg-terracotta-light text-terracotta font-bold' 
                     : 'text-stone-700 hover:bg-stone-100'
                 }`}
               >
-                <Icon size={18} className={isActive ? 'text-terracotta' : 'text-stone-400'} />
-                <span>{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className={isActive ? 'text-terracotta' : 'text-stone-400'} />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge > 0 && (
+                  <span className="bg-terracotta text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
