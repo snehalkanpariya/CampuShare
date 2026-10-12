@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import RoleSwitcherBanner from './components/RoleSwitcherBanner';
+import ToastNotification from './components/ToastNotification';
 import Welcome from './pages/Welcome';
 import RoleSelect from './pages/RoleSelect';
 import JuniorRegister from './pages/JuniorRegister';
@@ -15,28 +17,42 @@ import MyListings from './pages/MyListings';
 import Profile from './pages/Profile';
 import SafeExchange from './pages/SafeExchange';
 import RequestsExchanges from './pages/RequestsExchanges';
+import { DEMO_JUNIOR, DEMO_SENIOR } from './utils/demoUsers';
+import { emitToast } from './utils/notificationStorage';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('welcome');
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentUser, setCurrentUser] = useState(DEMO_JUNIOR);
   const [verificationData, setVerificationData] = useState(null);
   const [resultData, setResultData] = useState(null);
   const [lang, setLang] = useState('en');
 
-  // Load existing session from localStorage on startup
+  // Load existing session from localStorage on startup, or start in Junior demo mode
   useEffect(() => {
     const savedUser = localStorage.getItem('campus_user');
-    const savedToken = localStorage.getItem('campus_token');
-    if (savedUser && savedToken) {
+    if (savedUser) {
       try {
         const userObj = JSON.parse(savedUser);
         setCurrentUser({ ...userObj, verified: true });
-        setCurrentView('dashboard');
+        return;
       } catch (e) {
-        localStorage.clear();
+        localStorage.removeItem('campus_user');
       }
     }
+    // Default to DEMO_JUNIOR so evaluation of View -> Request Item works immediately out of the box
+    setCurrentUser(DEMO_JUNIOR);
+    localStorage.setItem('campus_user', JSON.stringify(DEMO_JUNIOR));
   }, []);
+
+  const handleSwitchUser = (newPersona) => {
+    setCurrentUser(newPersona);
+    localStorage.setItem('campus_user', JSON.stringify(newPersona));
+    emitToast({
+      title: `Switched to ${newPersona.name}`,
+      message: `Active persona: ${newPersona.role} • ${newPersona.department}`,
+      type: 'info'
+    });
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -67,9 +83,9 @@ export default function App() {
       case 'forgot-password':
         return <ForgotPassword onNavigate={setCurrentView} />;
       case 'dashboard':
-        return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} />;
+        return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} onSwitchUser={handleSwitchUser} />;
       case 'requests':
-        return <RequestsExchanges currentUser={currentUser} onNavigate={setCurrentView} />;
+        return <RequestsExchanges currentUser={currentUser} onNavigate={setCurrentView} onSwitchUser={handleSwitchUser} />;
       case 'listings':
         return <MyListings currentUser={currentUser} onNavigate={setCurrentView} />;
       case 'hostel':
@@ -78,7 +94,7 @@ export default function App() {
       case 'profile':
         return <Profile currentUser={currentUser} />;
       default:
-        return <Welcome onNavigate={setCurrentView} />;
+        return <Dashboard currentUser={currentUser} onNavigate={setCurrentView} onSwitchUser={handleSwitchUser} />;
     }
   };
 
@@ -86,13 +102,28 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-beige)' }}>
+      {/* Floating Real-time Toast Notifications */}
+      <ToastNotification onNavigate={setCurrentView} />
+
+      {/* Main Top Header Navbar */}
       <Navbar
         currentUser={currentUser}
         onNavigate={setCurrentView}
+        onSwitchUser={handleSwitchUser}
         lang={lang}
         setLang={setLang}
       />
 
+      {/* Interactive Role Switcher & Flow Bar */}
+      {showSidebar && (
+        <RoleSwitcherBanner
+          currentUser={currentUser}
+          onSwitchUser={handleSwitchUser}
+          onNavigate={setCurrentView}
+        />
+      )}
+
+      {/* App Body with Sidebar & Main Content */}
       <div style={{ flex: 1, display: 'flex' }}>
         {showSidebar && (
           <Sidebar

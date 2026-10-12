@@ -33,7 +33,9 @@ export default function Dashboard({ currentUser, onNavigate }) {
 
   useEffect(() => {
     loadAllItems();
-  }, []);
+    const interval = setInterval(loadAllItems, 3000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   const handleSaveItem = (newItemData) => {
     if (editingItem) {
