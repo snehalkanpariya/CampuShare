@@ -2,11 +2,31 @@ import React, { useState } from 'react';
 import { MapPin, ShieldCheck, KeyRound, CheckCircle2, AlertCircle, ArrowRight, Clock, Video } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function SafeExchange({ currentUser }) {
+export default function SafeExchange({ currentUser, items, onUpdateItemStatus, onNavigate }) {
   const { t } = useLanguage();
 
+  const [activeReservation, setActiveReservation] = useState(() => {
+    try {
+      const saved = localStorage.getItem('campus_active_reservation');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   const [inputCode, setInputCode] = useState('');
-  const [activeCode, setActiveCode] = useState('739201');
+  const [activeCode, setActiveCode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('campus_active_reservation');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.handshakeCode) return parsed.handshakeCode;
+      }
+    } catch (e) {
+      // Ignored
+    }
+    return '739201';
+  });
   const [verifyStatus, setVerifyStatus] = useState(null); // 'success' | 'error' | null
 
   const safeZones = [
@@ -48,6 +68,12 @@ export default function SafeExchange({ currentUser }) {
     e.preventDefault();
     if (inputCode.trim() === activeCode) {
       setVerifyStatus('success');
+      if (activeReservation && onUpdateItemStatus) {
+        onUpdateItemStatus(activeReservation.itemId, 'UNAVAILABLE');
+      }
+      try {
+        localStorage.removeItem('campus_active_reservation');
+      } catch (err) {}
     } else {
       setVerifyStatus('error');
     }

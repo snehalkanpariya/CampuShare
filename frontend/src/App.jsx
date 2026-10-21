@@ -87,6 +87,11 @@ function MainLayout() {
     setCurrentView('welcome');
   };
 
+  // Handle item status change (AVAILABLE, RESERVED, UNAVAILABLE)
+  const handleUpdateItemStatus = (itemId, newStatus) => {
+    setItems((prev) => prev.map((it) => (it.id === itemId || String(it.id) === String(itemId)) ? { ...it, status: newStatus } : it));
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
@@ -123,6 +128,10 @@ function MainLayout() {
           <Browse
             currentUser={currentUser}
             onNavigate={setCurrentView}
+            items={items}
+            onAddItem={handleAddItem}
+            onDeleteItem={handleDeleteItem}
+            onUpdateItemStatus={handleUpdateItemStatus}
           />
         );
       case 'listings':
@@ -144,7 +153,14 @@ function MainLayout() {
           />
         );
       case 'exchange-map':
-        return <SafeExchange currentUser={currentUser} />;
+        return (
+          <SafeExchange
+            currentUser={currentUser}
+            items={items}
+            onUpdateItemStatus={handleUpdateItemStatus}
+            onNavigate={setCurrentView}
+          />
+        );
       case 'profile':
         return <Profile currentUser={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />;
       default:

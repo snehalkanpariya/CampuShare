@@ -36,9 +36,14 @@ export default function Navbar({ currentUser, onNavigate, onLogout }) {
             placeholder={t('searchPlaceholder', 'Cmd+K Search campus items...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onNavigate('browse');
+              }
+            }}
             className="w-full pl-9 pr-16 py-1.5 rounded-full bg-white/95 text-stone-800 text-sm focus:bg-white outline-none transition-all shadow-inner"
           />
-          <span className="absolute right-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-semibold">
+          <span className="absolute right-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-semibold cursor-pointer" onClick={() => onNavigate('browse')}>
             {t('searchShort', 'Cmd+K')}
           </span>
         </div>

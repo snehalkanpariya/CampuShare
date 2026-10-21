@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Package, PlusCircle, ShieldAlert, Trash2, MapPin, Tag, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { Package, Compass, PlusCircle, ShieldAlert, Trash2, MapPin, Tag, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { createListingApi } from '../config/api';
 
-export default function Listings({ currentUser, items, onAddItem, onDeleteItem }) {
+export default function Listings({ currentUser, items, onAddItem, onDeleteItem, onNavigate }) {
   const { t } = useLanguage();
   const isAdmin = currentUser && (currentUser.role === 'ADMIN' || (currentUser.roles && currentUser.roles.includes('ADMIN')));
   
@@ -68,6 +69,25 @@ export default function Listings({ currentUser, items, onAddItem, onDeleteItem }
     };
 
     onAddItem(newItem);
+
+    // Also persist asynchronously to backend MongoDB via API
+    try {
+      createListingApi({
+        title: newItem.title,
+        category: newItem.category,
+        resourceType: formData.isDonation ? 'DONATION' : 'SELL',
+        price: newItem.rawPrice,
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : 500,
+        condition: newItem.condition,
+        location: newItem.location,
+        hostel: newItem.hostel,
+        description: newItem.description,
+        imageUrl: newItem.image
+      }).catch(err => console.debug('Offline or async listing save notice:', err.message));
+    } catch (e) {
+      // Ignored
+    }
+
     setShowAddModal(false);
     setFormData({
       title: '',
@@ -105,12 +125,23 @@ export default function Listings({ currentUser, items, onAddItem, onDeleteItem }
           </div>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-md shadow-terracotta/25 transition-all cursor-pointer"
-        >
-          <PlusCircle size={16} /> {t('postItemBtn', 'Post New Campus Item')}
-        </button>
+        <div className="flex items-center gap-3">
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('browse')}
+              className="bg-stone-900 hover:bg-stone-800 text-white px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              <Compass size={16} /> Browse Resources
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-terracotta hover:bg-terracotta-hover text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-md shadow-terracotta/25 transition-all cursor-pointer"
+          >
+            <PlusCircle size={16} /> {t('postItemBtn', 'Post New Campus Item')}
+          </button>
+        </div>
       </div>
 
       {/* Audit / Success Toast */}
