@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, Sparkles, ShieldAlert } from 'lucide-react';
+import { Home, Compass, User, ShieldCheck, BookOpen, Package, MapPin, LogOut, ShieldAlert } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Sidebar({ currentView, onNavigate, currentUser, onLogout }) {
@@ -20,10 +20,11 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
   }
 
   return (
-    <aside className="w-56 bg-white border-r border-stone-200 p-4 flex flex-col justify-between h-[calc(100vh-62px)] sticky top-[62px]">
-      <div>
+    <aside className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-stone-200 bg-white/95 p-1.5 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(44,34,30,0.08)] backdrop-blur md:sticky md:top-[62px] md:h-[calc(100vh-62px)] md:w-56 md:border-r md:border-t-0 md:p-4 md:shadow-none md:backdrop-blur-none">
+      <div className="md:flex md:h-full md:flex-col md:justify-between">
+        <div>
         {currentUser && (
-          <div className={`rounded-xl p-3 mb-5 border ${isAdmin ? 'bg-amber-50 border-amber-300' : currentUser.verified ? 'bg-sage-light border-emerald-200' : 'bg-amber-50 border-amber-200'} flex items-center gap-2.5`}>
+          <div className={`hidden md:flex rounded-xl p-3 mb-5 border ${isAdmin ? 'bg-amber-50 border-amber-300' : currentUser.verified ? 'bg-sage-light border-emerald-200' : 'bg-amber-50 border-amber-200'} items-center gap-2.5`}>
             {isAdmin ? (
               <ShieldAlert size={22} className="text-amber-700" />
             ) : (
@@ -40,11 +41,11 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
           </div>
         )}
 
-        <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-2 px-2">
+        <div className="hidden text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-2 px-2 md:block">
           {t('navigation', 'Navigation')}
         </div>
 
-        <nav className="flex flex-col gap-1">
+        <nav aria-label={t('navigation', 'Navigation')} className="flex items-stretch gap-1 overflow-x-auto md:flex-col md:gap-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -53,27 +54,23 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm w-full text-left font-semibold ${
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex min-w-[54px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition-all text-[9px] text-center font-semibold sm:min-w-[62px] sm:text-[10px] md:w-full md:min-w-0 md:flex-row md:flex-initial md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-left md:text-sm ${
                   isActive 
                     ? 'bg-terracotta-light text-terracotta font-bold' 
                     : 'text-stone-700 hover:bg-stone-100'
                 }`}
               >
-                <Icon size={18} className={isActive ? 'text-terracotta' : 'text-stone-400'} />
-                <span>{item.label}</span>
+                <Icon size={18} className={`shrink-0 ${isActive ? 'text-terracotta' : 'text-stone-400'}`} />
+                <span className="max-w-full truncate">{item.label}</span>
               </button>
             );
           })}
         </nav>
-      </div>
-
-      <div>
-        <div className="bg-gold-light border border-amber-200/60 rounded-xl p-3.5 mb-3 text-center">
-          <Sparkles size={22} className="text-gold mx-auto mb-1" />
-          <div className="text-xs font-bold text-amber-900">{t('ecoTitle', 'CampuShare Eco')}</div>
-          <div className="text-[11px] text-stone-600 font-medium">{t('itemsRehomed', '1,240 Items Re-homed 🌿')}</div>
         </div>
 
+        <div className="hidden md:block">
         {currentUser && (
           <button
             onClick={onLogout}
@@ -83,6 +80,7 @@ export default function Sidebar({ currentView, onNavigate, currentUser, onLogout
             <span>{t('logout', 'Logout')}</span>
           </button>
         )}
+        </div>
       </div>
     </aside>
   );

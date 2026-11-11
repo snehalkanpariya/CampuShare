@@ -188,7 +188,7 @@ function MainLayout() {
           />
         )}
 
-        <main style={{ flex: 1, width: '100%', overflowY: 'auto' }}>
+        <main className={showSidebar ? 'pb-20 md:pb-0' : ''} style={{ flex: 1, width: '100%', overflowY: 'auto' }}>
           {renderView()}
         </main>
       </div>

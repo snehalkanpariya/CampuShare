@@ -11,7 +11,6 @@ The project follows a scalable backend architecture using Spring Boot Microservi
 - Posts & Campus Feed
 - Resource Sharing
 - Notifications
-- Chat System
 - API Gateway
 - Eureka Service Discovery
 - Centralized Configuration (optional)
@@ -39,7 +38,6 @@ The project follows a scalable backend architecture using Spring Boot Microservi
 - User Service
 - Post Service
 - Notification Service
-- Chat Service
 
 ### Tools
 - Git
@@ -59,7 +57,6 @@ backend/
 ├── user-service
 ├── post-service
 ├── notification-service
-└── chat-service
 ```
 
 ## Architecture
@@ -76,9 +73,6 @@ Auth Service    User Service
    │               │
    ▼               ▼
 Post Service   Notification Service
-        │
-        ▼
-    Chat Service
 
         ▲
         │

@@ -1,64 +1,40 @@
-import React, { useState } from 'react';
-import { Search, Bell, Globe, LogOut, ShieldAlert } from 'lucide-react';
+import React from 'react';
+import { Bell, Globe, LogOut, ShieldAlert } from 'lucide-react';
 import CharkhaLogo from './CharkhaLogo';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar({ currentUser, onNavigate, onLogout }) {
   const { lang, setLang, t } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState('');
-
   const isAdmin = currentUser && (currentUser.role === 'ADMIN' || (currentUser.roles && currentUser.roles.includes('ADMIN')));
 
   return (
-    <header className="bg-terracotta text-white px-6 py-3 flex items-center justify-between shadow-md sticky top-0 z-50">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-2 bg-terracotta px-3 py-2.5 text-white shadow-md sm:gap-4 sm:px-6 sm:py-3">
       {/* Brand Header */}
       <div 
         onClick={() => currentUser ? onNavigate(isAdmin ? 'admin-dashboard' : 'dashboard') : onNavigate('welcome')}
         className="flex items-center gap-3 cursor-pointer group"
       >
-        <CharkhaLogo size={42} />
+        <CharkhaLogo size={36} />
         <div>
-          <h1 className="text-xl font-bold font-serif tracking-tight leading-none group-hover:text-amber-200 transition-colors">
+          <h1 className="text-base font-bold font-serif tracking-tight leading-none transition-colors group-hover:text-amber-200 sm:text-xl">
             {t('brandTitle', 'CampuShare | GVP')}
           </h1>
-          <span className="text-[10px] opacity-80 font-medium tracking-wide">
+          <span className="hidden text-[10px] font-medium tracking-wide opacity-80 sm:block">
             {t('brandSubtitle', 'Gujarat Vidyapith Ecosystem')}
           </span>
         </div>
       </div>
 
-      {/* Global Search - ONLY SHOWN WHEN USER IS LOGGED IN */}
-      {currentUser && (
-        <div className="relative w-80 md:w-96 flex items-center">
-          <Search size={16} className="absolute left-3.5 text-stone-400" />
-          <input
-            type="text"
-            placeholder={t('searchPlaceholder', 'Cmd+K Search campus items...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onNavigate('browse');
-              }
-            }}
-            className="w-full pl-9 pr-16 py-1.5 rounded-full bg-white/95 text-stone-800 text-sm focus:bg-white outline-none transition-all shadow-inner"
-          />
-          <span className="absolute right-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-semibold cursor-pointer" onClick={() => onNavigate('browse')}>
-            {t('searchShort', 'Cmd+K')}
-          </span>
-        </div>
-      )}
-
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
         {/* Full-Page Language Switcher */}
         <button
           onClick={() => setLang(lang === 'en' ? 'gu' : 'en')}
           title="Switch Language / ભાષા બદલો"
-          className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm transition-all border border-white/20 shadow-sm"
+          className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/25 sm:px-3.5"
         >
           <Globe size={14} />
-          <span>{lang === 'en' ? 'ગુજરાતી' : 'English'}</span>
+          <span className="hidden sm:inline">{lang === 'en' ? 'ગુજરાતી' : 'English'}</span>
         </button>
 
         {/* Admin Portal Quick Switch */}
@@ -66,7 +42,7 @@ export default function Navbar({ currentUser, onNavigate, onLogout }) {
           <button
             onClick={() => onNavigate('admin-dashboard')}
             title="Admin Authorization Portal"
-            className="flex items-center gap-1.5 bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 px-3 py-1.5 rounded-full text-xs font-bold border border-amber-400/30 transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/25 px-2.5 py-1.5 text-xs font-bold text-amber-200 shadow-sm transition-all hover:bg-amber-500/35 sm:px-3"
           >
             <ShieldAlert size={14} className="text-amber-300" />
             <span className="hidden md:inline">Admin Portal</span>
@@ -93,7 +69,7 @@ export default function Navbar({ currentUser, onNavigate, onLogout }) {
               <div className="w-7 h-7 rounded-full bg-white text-terracotta flex items-center justify-center font-bold text-xs">
                 {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
               </div>
-              <span className="text-xs font-bold">
+              <span className="hidden text-xs font-bold sm:inline">
                 {currentUser.name ? currentUser.name.split(' ')[0] : (isAdmin ? 'Admin' : 'Student')}
               </span>
             </div>
@@ -102,6 +78,7 @@ export default function Navbar({ currentUser, onNavigate, onLogout }) {
               id="navbar-logout-btn"
               onClick={onLogout}
               title={t('logout', 'Logout')}
+              aria-label={t('logout', 'Logout')}
               className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all border border-rose-400/50 cursor-pointer"
             >
               <LogOut size={14} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Package,
@@ -19,11 +19,8 @@ import {
   HeartHandshake,
   Repeat,
   Heart,
-  MessageSquare,
-  Star,
   UploadCloud,
   Check,
-  Send,
   Eye
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -102,7 +99,6 @@ export default function Browse({
 
   // Data & UI States
   const [listings, setListings] = useState([]);
-  const [allMasterItems, setAllMasterItems] = useState(parentItems || INITIAL_CAMPUS_ITEMS);
   const [loading, setLoading] = useState(true);
   const [errorNotice, setErrorNotice] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -141,12 +137,6 @@ export default function Browse({
   const [submitting, setSubmitting] = useState(false);
   const [reservationSuccessModal, setReservationSuccessModal] = useState(null);
 
-  // Chat / Inquiry Modal State
-  const [chatModalItem, setChatModalItem] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInputText, setChatInputText] = useState('');
-  const [isTypingReply, setIsTypingReply] = useState(false);
-
   // New Listing Form State
   const [formData, setFormData] = useState({
     title: '',
@@ -172,17 +162,6 @@ export default function Browse({
     { id: 'Hostel Needs', label: t('catHostel', 'Hostel Needs 🎁') },
     { id: 'Bicycles', label: t('catBicycles', 'Bicycles 🚲') },
   ];
-
-  // Calculate live item counts per category
-  const categoryCounts = useMemo(() => {
-    const counts = { All: allMasterItems.length };
-    ['Charkhas', 'Drafters', 'Lab Aprons', 'Books', 'Electronics', 'Hostel Needs', 'Bicycles'].forEach((catId) => {
-      counts[catId] = allMasterItems.filter(
-        (it) => it.category && it.category.toLowerCase() === catId.toLowerCase()
-      ).length;
-    });
-    return counts;
-  }, [allMasterItems]);
 
   const resourceTypes = [
     { id: 'ALL', label: t('allTypes', 'All Types'), icon: Package },
@@ -244,7 +223,6 @@ export default function Browse({
         setListings(fetchedListings);
         setTotalPages(data.totalPages || 1);
         setTotalElements(showWishlistOnly ? fetchedListings.length : (data.totalElements || 0));
-        setAllMasterItems(data.content);
       } else if (Array.isArray(data)) {
         let fetchedListings = data;
         if (showWishlistOnly) {
@@ -253,14 +231,12 @@ export default function Browse({
         setListings(fetchedListings);
         setTotalPages(1);
         setTotalElements(fetchedListings.length);
-        setAllMasterItems(data);
       }
     } catch (err) {
       setErrorNotice(err.message);
 
       // Client-side fallback filtering using parentItems or INITIAL_CAMPUS_ITEMS
       const sourceItems = parentItems && parentItems.length > 0 ? parentItems : INITIAL_CAMPUS_ITEMS;
-      setAllMasterItems(sourceItems);
 
       let filtered = [...sourceItems];
 
@@ -441,86 +417,6 @@ export default function Browse({
     showToast('Reservation cancelled. The item is now available for other students.');
   };
 
-  // Open Chat / Inquiry Modal
-  const handleOpenChatModal = (item, e) => {
-    if (e) e.stopPropagation();
-    setChatModalItem(item);
-
-    // Load saved conversation for this item or initialize
-    const savedThread = localStorage.getItem(`campus_chat_${item.id}`);
-    if (savedThread) {
-      try {
-        setChatMessages(JSON.parse(savedThread));
-      } catch (err) {
-        setChatMessages([]);
-      }
-    } else {
-      const initialMsgs = [
-        {
-          id: 1,
-          sender: 'system',
-          text: `Inquiry channel opened for: "${item.title}" (${item.price === 0 || item.price === 'Free' ? 'Free Donation' : '₹' + item.price})`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        },
-        {
-          id: 2,
-          sender: 'seller',
-          name: item.sellerName || 'Verified Senior',
-          text: `Namaste! Feel free to ask any question regarding condition, accessories, or meeting at safe zones.`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ];
-      setChatMessages(initialMsgs);
-      localStorage.setItem(`campus_chat_${item.id}`, JSON.stringify(initialMsgs));
-    }
-  };
-
-  // Send Chat Message
-  const handleSendMessage = (messageText) => {
-    const textToSend = messageText || chatInputText;
-    if (!textToSend.trim() || !chatModalItem) return;
-
-    const newMsg = {
-      id: Date.now(),
-      sender: 'buyer',
-      name: currentUser?.name || 'You',
-      text: textToSend.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    const updated = [...chatMessages, newMsg];
-    setChatMessages(updated);
-    setChatInputText('');
-    localStorage.setItem(`campus_chat_${chatModalItem.id}`, JSON.stringify(updated));
-
-    // Realistic Simulated Senior Response after 900ms
-    setIsTypingReply(true);
-    setTimeout(() => {
-      setIsTypingReply(false);
-      const responses = [
-        `Yes, "${chatModalItem.title}" is in great condition! We can meet at ${chatModalItem.location || 'Central Library Foyer'} for the physical inspection.`,
-        `Sure! Please feel free to reserve it on CampuShare, and we can do the OTP handshake whenever you're free on campus.`,
-        `Available! I'm around the department this afternoon. You can inspect it before confirming.`,
-        `Checked and functional. It helped me through my previous semester exams.`
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-      const sellerReply = {
-        id: Date.now() + 1,
-        sender: 'seller',
-        name: chatModalItem.sellerName || 'Verified Senior',
-        text: randomResponse,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setChatMessages((prev) => {
-        const withReply = [...prev, sellerReply];
-        localStorage.setItem(`campus_chat_${chatModalItem.id}`, JSON.stringify(withReply));
-        return withReply;
-      });
-    }, 1000);
-  };
-
   // Toggle / Update Listing Status (Admin or Seller)
   const handleUpdateStatus = async (item, newStatus) => {
     try {
@@ -627,7 +523,6 @@ export default function Browse({
       };
 
       setListings((prev) => [newItem, ...prev]);
-      setAllMasterItems((prev) => [newItem, ...prev]);
       setTotalElements((prev) => prev + 1);
       if (onAddItem) onAddItem(newItem);
       setShowAddModal(false);
@@ -703,7 +598,7 @@ export default function Browse({
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="mx-auto max-w-7xl space-y-5 p-3 sm:space-y-6 sm:p-6">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 bg-stone-900 text-white px-5 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-fade-in border border-stone-700">
@@ -713,17 +608,18 @@ export default function Browse({
       )}
 
       {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-gradient-to-br from-white via-white to-amber-50 p-5 shadow-sm sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="pointer-events-none absolute -right-10 -top-14 h-44 w-44 rounded-full bg-terracotta/5" />
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-terracotta-light text-terracotta rounded-2xl shadow-inner">
-              <Package size={28} />
+            <div className="rounded-2xl bg-terracotta-light p-3 text-terracotta shadow-inner">
+              <Package size={25} />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold font-serif text-stone-900 tracking-tight">
+              <h1 className="text-xl font-extrabold font-serif text-stone-900 tracking-tight sm:text-2xl">
                 {t('browseTitle', 'Browse Campus Resources')}
               </h1>
-              <p className="text-xs text-stone-500 font-medium mt-0.5">
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-stone-500 font-medium">
                 {t('browseSubtitle', 'Discover, share, and borrow verified academic gear across Gujarat Vidyapith')}
               </p>
             </div>
@@ -733,6 +629,9 @@ export default function Browse({
         <div className="flex items-center gap-2.5 w-full md:w-auto">
           {/* Wishlist Toggle Button */}
           <button
+            type="button"
+            aria-pressed={showWishlistOnly}
+            aria-label={`${t('wishlistTab', 'Saved Wishlist')} (${wishlist.length})`}
             onClick={() => {
               setShowWishlistOnly((prev) => !prev);
               setCurrentPage(0);
@@ -762,6 +661,8 @@ export default function Browse({
           )}
 
           <button
+            type="button"
+            aria-label={t('postItemBtn', 'Post Resource')}
             onClick={() => setShowAddModal(true)}
             className="flex-1 md:flex-initial bg-terracotta hover:bg-terracotta-hover text-white px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-terracotta/25 transition-all cursor-pointer"
           >
@@ -781,23 +682,25 @@ export default function Browse({
       )}
 
       {/* Search & Sort Controls Bar */}
-      <div className="bg-white rounded-3xl p-4 border border-stone-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="rounded-3xl border border-stone-200 bg-white p-3 shadow-sm sm:p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
         {/* Search Input */}
-        <div className="relative w-full md:w-96 flex items-center">
-          <Search size={16} className="absolute left-3.5 text-stone-400" />
+        <div className="relative flex w-full items-center md:flex-1">
+          <Search size={17} className="absolute left-4 text-terracotta" />
           <input
             type="text"
+            aria-label={t('searchResourcesPlaceholder', 'Search resources by title, keywords, or location...')}
             placeholder={t('searchResourcesPlaceholder', 'Search resources by title, keywords, or location...')}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setCurrentPage(0);
             }}
-            className="w-full pl-9 pr-9 py-2.5 rounded-2xl bg-stone-50 border border-stone-200 text-stone-800 text-xs font-medium focus:bg-white focus:border-terracotta outline-none transition-all shadow-inner"
+            className="w-full rounded-2xl border border-stone-200 bg-stone-50 py-3 pl-11 pr-10 text-sm font-medium text-stone-800 shadow-inner outline-none transition-all placeholder:text-stone-400 focus:border-terracotta focus:bg-white"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
+              aria-label={t('clearSearch', 'Clear search')}
               className="absolute right-3 text-stone-400 hover:text-stone-700"
             >
               <X size={14} />
@@ -806,7 +709,7 @@ export default function Browse({
         </div>
 
         {/* Status & Sort Controls */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end overflow-x-auto pb-1 md:pb-0">
+        <div className="flex w-full items-center justify-between gap-2 overflow-x-auto pb-1 md:w-auto md:justify-end md:pb-0">
           {/* Status Filter */}
           <div className="flex items-center gap-1.5 text-xs font-bold text-stone-500 whitespace-nowrap">
             <span>{t('statusLabel', 'Status:')}</span>
@@ -846,19 +749,18 @@ export default function Browse({
         </div>
       </div>
 
-      {/* Category Filter Pills with Dynamic Item Counts */}
-      <div className="space-y-2">
+      {/* Category Filter Pills */}
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
             {t('category', 'Category Filter')}
           </span>
           <span className="text-[11px] font-bold text-stone-500">
-            {totalElements} {t('showingItems', 'items')}
+            {totalElements} {t('itemsLabel', 'items')}
           </span>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {baseCategories.map((cat) => {
-            const count = categoryCounts[cat.id] || 0;
             const isSelected = selectedCategory === cat.id;
             return (
               <button
@@ -867,20 +769,14 @@ export default function Browse({
                   setSelectedCategory(cat.id);
                   setCurrentPage(0);
                 }}
-                className={`px-4 py-2 rounded-2xl font-bold text-xs whitespace-nowrap transition-all shadow-sm cursor-pointer flex items-center gap-1.5 ${
+                aria-pressed={isSelected}
+                className={`px-3.5 py-2.5 rounded-2xl font-bold text-xs whitespace-nowrap transition-all shadow-sm cursor-pointer flex items-center gap-1.5 ${
                   isSelected
                     ? 'bg-stone-900 text-white shadow-stone-900/20'
                     : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
                 }`}
               >
                 <span>{cat.label}</span>
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'
-                  }`}
-                >
-                  {count}
-                </span>
               </button>
             );
           })}
@@ -1100,11 +996,9 @@ export default function Browse({
                           <Tag size={13} className="text-stone-400 shrink-0" />
                           <span className="truncate">{item.category} • {item.condition || 'Good'}</span>
                         </div>
-                        {/* Seller Rating Badge */}
-                        <div className="flex items-center gap-1 text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200 shrink-0">
-                          <Star size={10} className="fill-amber-500 text-amber-500" />
-                          <span>4.9</span>
-                        </div>
+                        <span className="shrink-0 rounded-md bg-stone-100 px-1.5 py-0.5 text-[10px] font-bold text-stone-600">
+                          {item.sellerRole || 'Student'}
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -1124,15 +1018,6 @@ export default function Browse({
                     >
                       <Eye size={13} />
                       <span>{t('viewDetails', 'Details')}</span>
-                    </button>
-
-                    {/* Direct Quick Action: Message Seller */}
-                    <button
-                      onClick={(e) => handleOpenChatModal(item, e)}
-                      title={t('chatWithSeller', 'Message Seller')}
-                      className="px-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center"
-                    >
-                      <MessageSquare size={14} />
                     </button>
 
                     {/* Direct Quick Action: Reserve or Claim */}
@@ -1348,31 +1233,18 @@ export default function Browse({
                 </div>
               </div>
 
-              {/* Seller Trust & Campus Reputation Card */}
-              <div className="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-200/60 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <div>
-                    <span className="text-stone-400 text-[10px] font-bold uppercase block">
-                      {t('sellerReputationTitle', 'Seller Trust & Campus Reputation')}
-                    </span>
-                    <span className="font-extrabold text-stone-800 text-sm">
-                      {selectedItemForModal.sellerName || 'Verified Senior Student'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full text-xs font-black">
-                    <Star size={13} className="fill-amber-500 text-amber-500" />
-                    <span>4.9 / 5.0 (14 reviews)</span>
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-stone-600 flex items-center justify-between border-t border-blue-100 pt-2 font-medium">
-                  <span className="flex items-center gap-1 text-emerald-800 font-bold">
-                    <CheckCircle2 size={13} /> {t('punctualRating', '100% On-Time Handover Rate')}
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-stone-50 p-3.5">
+                <div className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-stone-400">
+                    {t('sellerDetails', 'Seller')}
                   </span>
-                  <span className="text-stone-500">
-                    {selectedItemForModal.sellerEmail || 'verified@gujaratvidyapith.org'}
+                  <span className="block truncate text-sm font-extrabold text-stone-800">
+                    {selectedItemForModal.sellerName || t('campusStudent', 'Campus student')}
                   </span>
                 </div>
+                <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[10px] font-bold text-stone-600 ring-1 ring-stone-200">
+                  {selectedItemForModal.sellerRole || t('studentRole', 'Student')}
+                </span>
               </div>
 
               {/* Action Buttons Row */}
@@ -1411,15 +1283,6 @@ export default function Browse({
                     )}
                   </div>
                 )}
-
-                {/* Message Seller Button */}
-                <button
-                  onClick={() => handleOpenChatModal(selectedItemForModal)}
-                  className="bg-stone-900 hover:bg-stone-800 text-white px-5 py-3 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <MessageSquare size={16} />
-                  <span>{t('chatWithSeller', 'Message')}</span>
-                </button>
 
                 {/* Direct Safe Exchange Map Button */}
                 {onNavigate && (
@@ -1511,123 +1374,6 @@ export default function Browse({
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===================== PEER CHAT / INQUIRY MODAL ===================== */}
-      {chatModalItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 space-y-4 my-8 animate-fade-in flex flex-col h-[580px]">
-            {/* Header */}
-            <div className="flex justify-between items-center border-b border-stone-100 pb-3">
-              <div className="flex items-center gap-3">
-                <img
-                  src={chatModalItem.imageUrl || chatModalItem.image}
-                  alt={chatModalItem.title}
-                  className="w-10 h-10 rounded-xl object-cover"
-                />
-                <div>
-                  <h3 className="text-sm font-extrabold text-stone-900 line-clamp-1">
-                    {chatModalItem.title}
-                  </h3>
-                  <div className="text-[11px] text-stone-500 flex items-center gap-1">
-                    <span>Seller: {chatModalItem.sellerName || 'Verified Senior'}</span>
-                    <span className="text-emerald-600 font-bold">• Active</span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setChatModalItem(null)}
-                className="text-stone-400 hover:text-stone-700 cursor-pointer p-1"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Quick Inquiry Chips */}
-            <div className="space-y-1.5 pt-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                {t('quickQuestions', 'Quick Questions:')}
-              </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {[
-                  'Is this still available?',
-                  'Can we meet at Central Library?',
-                  'Can you do a student discount?',
-                  'Is everything in working order?'
-                ].map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSendMessage(q)}
-                    className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] font-bold rounded-full whitespace-nowrap cursor-pointer transition-colors"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Message History Thread */}
-            <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-stone-50 rounded-2xl border border-stone-200 shadow-inner">
-              {chatMessages.map((msg) => {
-                if (msg.sender === 'system') {
-                  return (
-                    <div key={msg.id} className="text-center text-[10px] text-stone-400 font-bold bg-white/70 py-1 px-3 rounded-full w-fit mx-auto border border-stone-200">
-                      {msg.text}
-                    </div>
-                  );
-                }
-
-                const isMe = msg.sender === 'buyer';
-                return (
-                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                    <div className="text-[9px] text-stone-400 font-bold mb-0.5 px-1">{msg.name}</div>
-                    <div
-                      className={`max-w-[80%] p-3 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${
-                        isMe
-                          ? 'bg-terracotta text-white rounded-br-sm'
-                          : 'bg-white text-stone-800 border border-stone-200 rounded-bl-sm'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    <div className="text-[9px] text-stone-400 mt-0.5 px-1">{msg.timestamp}</div>
-                  </div>
-                );
-              })}
-
-              {isTypingReply && (
-                <div className="flex items-center gap-1.5 text-stone-400 text-xs italic px-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-pulse"></span>
-                  <span>Senior is typing a reply...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Chat Input Bar */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="flex gap-2 pt-2"
-            >
-              <input
-                type="text"
-                placeholder={t('chatPromptPlaceholder', 'Type your question or proposal...')}
-                value={chatInputText}
-                onChange={(e) => setChatInputText(e.target.value)}
-                className="flex-1 p-3 rounded-2xl border border-stone-200 bg-stone-50 text-xs font-medium outline-none focus:bg-white focus:border-terracotta"
-              />
-              <button
-                type="submit"
-                disabled={!chatInputText.trim()}
-                className="bg-terracotta hover:bg-terracotta-hover text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center"
-              >
-                <Send size={15} />
-              </button>
-            </form>
           </div>
         </div>
       )}
